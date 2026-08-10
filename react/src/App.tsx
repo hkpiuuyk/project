@@ -102,7 +102,6 @@ function App() {
     setActivePlaylist(targetPlaylist)
   }
   const deletePlaylist = (name: string) => {
-    if (!window.confirm(`'${name}' 플레이리스트를 삭제할까요?`)) return
     setPlaylists(current => current.filter(item => item[0] !== name))
     setPlaylistSongs(current => {
       const { [name]: _removed, ...remaining } = current
