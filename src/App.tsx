@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import playIcon from './assets/figma/play.svg'
 import playLightIcon from './assets/figma/play-light.svg'
+import pauseIcon from './assets/figma/pause.svg'
+import nextIcon from './assets/figma/next.svg'
 import homeIcon from './assets/figma/home.svg'
 import libraryIcon from './assets/figma/library.svg'
 import searchIcon from './assets/figma/search.svg'
@@ -91,7 +93,10 @@ function App() {
   const [diaryMood, setDiaryMood] = useState('차분함')
   const [diaryText, setDiaryText] = useState('')
   const [track, setTrack] = useState<Track>(recommendations[0])
-  const selectTrack = (nextTrack: Track) => setTrack(nextTrack)
+  const [playing, setPlaying] = useState(false)
+  const [playerOpen, setPlayerOpen] = useState(false)
+  const [miniPlayerVisible, setMiniPlayerVisible] = useState(false)
+  const selectTrack = (nextTrack: Track) => { setTrack(nextTrack); setPlaying(true); setMiniPlayerVisible(true); setPlayerOpen(true) }
   const createPlaylist = () => {
     const name = playlistName.trim()
     if (!name) return
@@ -186,7 +191,12 @@ function App() {
         <section className="search-results" aria-live="polite">{searchResults.slice(0, 2).map(item => <TrackRow key={item[0]} track={item} light={false} onPlay={() => selectTrack(item)} />)}{searchResults.length === 0 && <p className="no-results">검색 결과가 없어요.</p>}</section>
       </> : <section className="empty-screen"><h2>{tab}</h2><p>{tab} 화면은 곧 준비됩니다.</p></section>}
     </section>
+    {miniPlayerVisible && !playerOpen && <button className="mini-player" onClick={() => setPlayerOpen(true)} aria-label="전체 플레이어 열기">
+      <span className="artwork mini-art" /><span className="mini-copy"><strong>{track[0]}</strong><span>{track[1]}</span></span>
+      <span className="mini-control"><img src={playing ? pauseIcon : playIcon} alt="" /></span><img className="next-icon" src={nextIcon} alt="" />
+    </button>}
     <nav className="nav-footer" aria-label="주요 메뉴">{tabs.map(([name, icon]) => <button key={name} className={tab === name ? 'tab active' : 'tab'} onClick={() => { setActivePlaylist(null); setTab(name) }}><img src={icon} alt="" /><span>{name}</span></button>)}</nav>
+    {playerOpen && <div className="player-overlay"><section className="player-sheet" aria-label="전체 플레이어"><button className="sheet-close" onClick={() => setPlayerOpen(false)} aria-label="플레이어 축소"><img src={closeIcon} alt="" /></button><div className="sheet-artwork" /><h2>{track[0]}</h2><p>{track[1]}</p><input aria-label="재생 위치" type="range" defaultValue="28" /><div className="time-row"><span>1:04</span><span>3:42</span></div><div className="sheet-controls"><button aria-label="이전 곡">‹‹</button><button className="sheet-play" onClick={() => setPlaying(!playing)} aria-label={playing ? '일시 정지' : '재생'}><img src={playing ? pauseIcon : playIcon} alt="" /></button><button aria-label="다음 곡">››</button></div></section></div>}
     {createSheetOpen && <div className="create-overlay"><section className="create-sheet" aria-label="새 플레이리스트 만들기"><header><h2>새 플레이리스트</h2><button onClick={() => setCreateSheetOpen(false)} aria-label="닫기"><img src={closeIcon} alt="" /></button></header><input autoFocus value={playlistName} onChange={event => setPlaylistName(event.target.value)} onKeyDown={event => event.key === 'Enter' && createPlaylist()} placeholder="예: 비 오는 날 듣는 곡" aria-label="플레이리스트 이름" /><button className="create-button" onClick={createPlaylist}>만들기</button></section></div>}
     {songAddSheetOpen && <div className="create-overlay" onClick={() => setSongAddSheetOpen(false)}><section className="song-add-sheet" onClick={event => event.stopPropagation()} aria-label="플레이리스트에 곡 추가"><header><h2>곡 추가</h2><button onClick={() => setSongAddSheetOpen(false)} aria-label="닫기"><img src={closeIcon} alt="" /></button></header><label className="sheet-search"><input placeholder="검색" aria-label="추가할 곡 검색" /></label><div className="song-options">{availableSongs.map(item => { const selected = selectedSongNames.includes(item[0]); return <button key={item[0]} className="song-option" onClick={() => toggleSong(item[0])}><span className="artwork" /><span className="track-copy"><strong>{item[0]}</strong><span>{item[1]}</span></span><span className={selected ? 'circle-choice checked' : 'circle-choice'}>{selected ? '✓' : <img src={checkboxCircleIcon} alt="" />}</span></button> })}</div>{availableSongs.length === 0 && <p className="no-results">추가할 수 있는 곡이 없어요.</p>}<button className="create-button" onClick={addSongsToPlaylist}>{selectedSongNames.length}곡 추가</button></section></div>}
     {playlistPendingDelete && <div className="create-overlay delete-overlay" onClick={() => setPlaylistPendingDelete(null)}><section className="delete-dialog" onClick={event => event.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="delete-title"><h2 id="delete-title">플레이리스트를 삭제할까요?</h2><p>삭제한 플레이리스트는 되돌릴 수 없어요.</p><div><button onClick={() => setPlaylistPendingDelete(null)}>취소</button><button className="confirm-delete" onClick={() => deletePlaylist(playlistPendingDelete)}>삭제</button></div></section></div>}
