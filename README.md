@@ -1,32 +1,40 @@
-# React + TypeScript + Vite
+# 음악 일기 (Music Diary)
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+오늘의 기분을 고르면 어울리는 곡을 추천해주고, 플레이리스트로 모아 듣고, 들은 곡과 함께
+하루를 기록하는 모바일 웹 음악 앱입니다. 팀 **Clova**의 프로젝트입니다.
 
-Currently, two official plugins are available:
+## 주요 기능
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **홈**: 기분(차분함/설렘/위로/집중/그리움)을 고르면 배경이 그 기분 색으로 물들고,
+  추천곡과 최근 재생 목록을 보여줍니다.
+- **라이브러리**: 플레이리스트를 만들고 곡을 담고, 곡 순서를 드래그로 바꾸고, 삭제할 수
+  있습니다.
+- **탐색**: 곡 제목이나 아티스트로 검색합니다.
+- **일기**: 오늘 들은 곡과 기분을 짧은 글로 남깁니다.
+- **미니 플레이어 / 전체 플레이어**: 화면 하단에서 재생과 다음 곡을 조작하고, 위로
+  스와이프하면 전체 화면으로 펼쳐집니다.
 
-## React Compiler
+> 현재 재생은 UI 시뮬레이션입니다. 실제 오디오 재생(`<audio>`)은 아직 연결되어 있지
+> 않습니다.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## 기술 스택
 
-## Expanding the Oxlint configuration
+- React 19 + TypeScript
+- Vite 8
+- Oxlint
+- 상태 관리는 `useState`와 `localStorage`만 사용합니다(별도 라이브러리 없음).
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
+## 시작하기
 
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```bash
+npm install
+npm run dev      # 개발 서버, http://localhost:5173
+npm run build    # 프로덕션 빌드 (tsc -b && vite build)
+npm run lint     # oxlint
+npm run preview  # 빌드 결과 미리보기
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+## 알려진 이슈
+
+- [#1 플레이리스트 이름 중복되면 곡 목록이 덮어써짐](https://github.com/hkpiuuyk/project/issues/1)
+- [#2 플레이리스트 재생 버튼이 항상 같은 곡을 재생함](https://github.com/hkpiuuyk/project/issues/2)
