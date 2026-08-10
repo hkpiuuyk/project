@@ -35,6 +35,7 @@ const allSearchTracks: Track[] = [
   ['Blue Hour', 'KIMDA'], ['After Rain', 'Sori'], ['Slow dance', 'Mondo Loops'],
 ]
 const PLAYLIST_STORAGE_KEY = 'music-diary-playlists'
+const PLAYLIST_SONGS_STORAGE_KEY = 'music-diary-playlist-songs'
 const tabs = [
   ['홈', homeIcon], ['라이브러리', libraryIcon], ['탐색', searchIcon], ['일기', diaryIcon], ['마이', userIcon],
 ]
@@ -62,6 +63,14 @@ function App() {
       return []
     }
   })
+  const [playlistSongs, setPlaylistSongs] = useState<Record<string, string[]>>(() => {
+    try {
+      const saved = localStorage.getItem(PLAYLIST_SONGS_STORAGE_KEY)
+      return saved ? JSON.parse(saved) as Record<string, string[]> : {}
+    } catch {
+      return {}
+    }
+  })
   const [songAddSheetOpen, setSongAddSheetOpen] = useState(false)
   const [targetPlaylist, setTargetPlaylist] = useState<string | null>(null)
   const [selectedSongNames, setSelectedSongNames] = useState<string[]>([])
@@ -74,6 +83,7 @@ function App() {
     const name = playlistName.trim()
     if (!name) return
     setPlaylists(current => [...current, [name, '곡 0개']])
+    setPlaylistSongs(current => ({ ...current, [name]: [] }))
     setPlaylistName('')
     setCreateSheetOpen(false)
     setTargetPlaylist(name)
@@ -83,17 +93,23 @@ function App() {
   const toggleSong = (songName: string) => setSelectedSongNames(current => current.includes(songName) ? current.filter(name => name !== songName) : [...current, songName])
   const addSongsToPlaylist = () => {
     if (!targetPlaylist || selectedSongNames.length === 0) return
-    setPlaylists(current => current.map(item => item[0] === targetPlaylist ? [item[0], `곡 ${selectedSongNames.length}개`] : item))
+    const existingSongs = playlistSongs[targetPlaylist] || []
+    const updatedSongs = [...existingSongs, ...selectedSongNames.filter(name => !existingSongs.includes(name))]
+    setPlaylistSongs(current => ({ ...current, [targetPlaylist]: updatedSongs }))
+    setPlaylists(current => current.map(item => item[0] === targetPlaylist ? [item[0], `곡 ${updatedSongs.length}개`] : item))
     setSongAddSheetOpen(false)
     setActivePlaylist(targetPlaylist)
   }
   const searchResults = allSearchTracks.filter(item => item[0].toLowerCase().includes(query.toLowerCase()) || item[1].toLowerCase().includes(query.toLowerCase()))
-  const activePlaylistData = playlists.find(item => item[0] === activePlaylist)
-  const detailTracks = activePlaylistData ? allSearchTracks.slice(0, Number.parseInt(activePlaylistData[1].replace(/\D/g, ''), 10) || 0) : []
+  const detailTracks = activePlaylist ? (playlistSongs[activePlaylist] || []).map(name => allSearchTracks.find(item => item[0] === name)).filter((item): item is Track => Boolean(item)) : []
+  const availableSongs = targetPlaylist ? allSearchTracks.filter(item => !(playlistSongs[targetPlaylist] || []).includes(item[0])) : allSearchTracks
 
   useEffect(() => {
     localStorage.setItem(PLAYLIST_STORAGE_KEY, JSON.stringify(playlists))
   }, [playlists])
+  useEffect(() => {
+    localStorage.setItem(PLAYLIST_SONGS_STORAGE_KEY, JSON.stringify(playlistSongs))
+  }, [playlistSongs])
 
   const moodStyle = mood ? {
     '--mood-start': mood.start, '--mood-middle': mood.middle, '--mood-end': mood.end, '--mood-chip': mood.chip,
@@ -124,7 +140,7 @@ function App() {
     {playerOpen && <div className="player-overlay" onClick={() => setPlayerOpen(false)}><section className="player-sheet" onClick={event => event.stopPropagation()} aria-label="전체 플레이어">
       <button className="sheet-close" onClick={() => setPlayerOpen(false)} aria-label="플레이어 닫기">×</button><div className="sheet-artwork" /><h2>{track[0]}</h2><p>{track[1]}</p><input aria-label="재생 위치" type="range" defaultValue="28" /><div className="time-row"><span>1:04</span><span>3:42</span></div><div className="sheet-controls"><button aria-label="이전 곡">‹‹</button><button className="sheet-play" onClick={() => setPlaying(!playing)}><img src={playing ? pauseIcon : playIcon} alt="" /></button><button aria-label="다음 곡">››</button></div></section></div>}
     {createSheetOpen && <div className="create-overlay" onClick={() => setCreateSheetOpen(false)}><section className="create-sheet" onClick={event => event.stopPropagation()} aria-label="새 플레이리스트 만들기"><header><h2>새 플레이리스트</h2><button onClick={() => setCreateSheetOpen(false)} aria-label="닫기"><img src={closeIcon} alt="" /></button></header><input autoFocus value={playlistName} onChange={event => setPlaylistName(event.target.value)} onKeyDown={event => event.key === 'Enter' && createPlaylist()} placeholder="예: 비 오는 날 듣는 곡" aria-label="플레이리스트 이름" /><button className="create-button" onClick={createPlaylist}>만들기</button></section></div>}
-    {songAddSheetOpen && <div className="create-overlay" onClick={() => setSongAddSheetOpen(false)}><section className="song-add-sheet" onClick={event => event.stopPropagation()} aria-label="플레이리스트에 곡 추가"><header><h2>곡 추가</h2><button onClick={() => setSongAddSheetOpen(false)} aria-label="닫기"><img src={closeIcon} alt="" /></button></header><label className="sheet-search"><input placeholder="검색" aria-label="추가할 곡 검색" /></label><div className="song-options">{allSearchTracks.map(item => { const selected = selectedSongNames.includes(item[0]); return <button key={item[0]} className="song-option" onClick={() => toggleSong(item[0])}><span className="artwork" /><span className="track-copy"><strong>{item[0]}</strong><span>{item[1]}</span></span><span className={selected ? 'circle-choice checked' : 'circle-choice'}>{selected ? '✓' : <img src={checkboxCircleIcon} alt="" />}</span></button> })}</div><button className="create-button" onClick={addSongsToPlaylist}>{selectedSongNames.length}곡 추가</button></section></div>}
+    {songAddSheetOpen && <div className="create-overlay" onClick={() => setSongAddSheetOpen(false)}><section className="song-add-sheet" onClick={event => event.stopPropagation()} aria-label="플레이리스트에 곡 추가"><header><h2>곡 추가</h2><button onClick={() => setSongAddSheetOpen(false)} aria-label="닫기"><img src={closeIcon} alt="" /></button></header><label className="sheet-search"><input placeholder="검색" aria-label="추가할 곡 검색" /></label><div className="song-options">{availableSongs.map(item => { const selected = selectedSongNames.includes(item[0]); return <button key={item[0]} className="song-option" onClick={() => toggleSong(item[0])}><span className="artwork" /><span className="track-copy"><strong>{item[0]}</strong><span>{item[1]}</span></span><span className={selected ? 'circle-choice checked' : 'circle-choice'}>{selected ? '✓' : <img src={checkboxCircleIcon} alt="" />}</span></button> })}</div>{availableSongs.length === 0 && <p className="no-results">추가할 수 있는 곡이 없어요.</p>}<button className="create-button" onClick={addSongsToPlaylist}>{selectedSongNames.length}곡 추가</button></section></div>}
   </main>
 }
 
