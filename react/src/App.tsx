@@ -46,6 +46,7 @@ function App() {
   const [mood, setMood] = useState<typeof moods[number] | null>(null)
   const [tab, setTab] = useState('홈')
   const [query, setQuery] = useState('')
+  const [libraryFilter, setLibraryFilter] = useState('전체')
   const [playing, setPlaying] = useState(false)
   const [playerOpen, setPlayerOpen] = useState(false)
   const [track, setTrack] = useState<Track>(recommendations[0])
@@ -57,14 +58,18 @@ function App() {
   } as React.CSSProperties : undefined
   return <main className={mood ? 'phone-shell mood-active' : 'phone-shell'} style={moodStyle}>
     <div className="status-bar" />
-    {tab === '탐색' ? <header className="search-header"><span>음악 일기</span><h1>탐색</h1></header> : <header className="app-header"><span className="logo-mark" /><h1>음악 일기</h1></header>}
-    <section className={tab === '탐색' ? 'content search-content' : 'content'} aria-label={`${tab} 화면`}>
+    {tab === '탐색' || tab === '라이브러리' ? <header className="search-header"><span>음악 일기</span><h1>{tab}</h1></header> : <header className="app-header"><span className="logo-mark" /><h1>음악 일기</h1></header>}
+    <section className={tab === '탐색' || tab === '라이브러리' ? 'content search-content' : 'content'} aria-label={`${tab} 화면`}>
       {tab === '홈' ? <>
         <section className="mood-section"><h2>오늘 기분은 어때요?</h2><div className="mood-list">
           {moods.map(item => <button key={item.name} className={mood?.name === item.name ? 'mood-chip selected' : 'mood-chip'} onClick={() => setMood(item.name === mood?.name ? null : item)}>{item.name}</button>)}
         </div></section>
         <section className="music-section"><h2>오늘의 추천</h2>{recommendations.map(item => <TrackRow key={item[0]} track={item} light={Boolean(mood)} onPlay={() => selectTrack(item)} />)}</section>
         <section className="music-section"><h2>최근 재생</h2>{recents.map(item => <TrackRow key={item[0]} track={item} light={Boolean(mood)} onPlay={() => selectTrack(item)} />)}</section>
+      </> : tab === '라이브러리' ? <>
+        <div className="library-filters">{['전체', '좋아요', '최근재생'].map(filter => <button key={filter} onClick={() => setLibraryFilter(filter)} className={libraryFilter === filter ? 'library-filter active-filter' : 'library-filter'}>{filter}</button>)}</div>
+        <section className="library-tracks">{recommendations.map(item => <TrackRow key={item[0]} track={item} light={false} onPlay={() => selectTrack(item)} />)}</section>
+        <section className="playlist-section"><div className="playlist-heading"><h2>내 플레이리스트</h2><button onClick={() => undefined}>+ 만들기</button></div><TrackRow track={['아침의 공기', '곡 12개']} light={false} onPlay={() => selectTrack(['Blue Hour', 'KIMDA'])} /><TrackRow track={['비 오는 날', '곡 8개']} light={false} onPlay={() => selectTrack(['After Rain', 'Sori'])} /></section>
       </> : tab === '탐색' ? <>
         <label className="search-field"><input value={query} onChange={event => setQuery(event.target.value)} placeholder="검색" aria-label="음악 검색" /></label>
         <section className="search-results" aria-live="polite">{searchResults.slice(0, 2).map(item => <TrackRow key={item[0]} track={item} light={false} onPlay={() => selectTrack(item)} />)}{searchResults.length === 0 && <p className="no-results">검색 결과가 없어요.</p>}</section>
