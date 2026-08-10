@@ -12,9 +12,11 @@ import closeIcon from './assets/figma/close.svg'
 import checkboxCircleIcon from './assets/figma/checkbox-circle.svg'
 import backIcon from './assets/figma/back.svg'
 import orderIcon from './assets/figma/order.svg'
+import diaryPlayIcon from './assets/figma/diary-play.svg'
 import './App.css'
 
 type Track = readonly [string, string]
+type DiaryEntry = { date: string; mood: string; text: string; track: Track }
 
 const moods = [
   { name: '차분함', start: '#e0fbf5', middle: '#86ead4', end: '#5bcfb3', chip: '#4fbfa0' },
@@ -36,6 +38,7 @@ const allSearchTracks: Track[] = [
 ]
 const PLAYLIST_STORAGE_KEY = 'music-diary-playlists'
 const PLAYLIST_SONGS_STORAGE_KEY = 'music-diary-playlist-songs'
+const DIARY_STORAGE_KEY = 'music-diary-entries'
 const tabs = [
   ['홈', homeIcon], ['라이브러리', libraryIcon], ['탐색', searchIcon], ['일기', diaryIcon], ['마이', userIcon],
 ]
@@ -74,8 +77,21 @@ function App() {
   })
   const [songAddSheetOpen, setSongAddSheetOpen] = useState(false)
   const [targetPlaylist, setTargetPlaylist] = useState<string | null>(null)
+  const [playlistPendingDelete, setPlaylistPendingDelete] = useState<string | null>(null)
   const [selectedSongNames, setSelectedSongNames] = useState<string[]>([])
   const [activePlaylist, setActivePlaylist] = useState<string | null>(null)
+  const [draggedSong, setDraggedSong] = useState<string | null>(null)
+  const [diaryWriting, setDiaryWriting] = useState(false)
+  const [diaryEntries, setDiaryEntries] = useState<DiaryEntry[]>(() => {
+    try {
+      const saved = localStorage.getItem(DIARY_STORAGE_KEY)
+      return saved ? JSON.parse(saved) as DiaryEntry[] : []
+    } catch {
+      return []
+    }
+  })
+  const [diaryMood, setDiaryMood] = useState('차분함')
+  const [diaryText, setDiaryText] = useState('')
   const [playing, setPlaying] = useState(false)
   const [playerOpen, setPlayerOpen] = useState(false)
   const [track, setTrack] = useState<Track>(recommendations[0])
@@ -108,6 +124,36 @@ function App() {
       return remaining
     })
     if (activePlaylist === name) setActivePlaylist(null)
+    setPlaylistPendingDelete(null)
+  }
+  const movePlaylistSong = (songName: string, targetSongName: string) => {
+    if (!activePlaylist) return
+    setPlaylistSongs(current => {
+      const songs = [...(current[activePlaylist] || [])]
+      const index = songs.indexOf(songName)
+      const targetIndex = songs.indexOf(targetSongName)
+      if (index < 0 || targetIndex < 0 || index === targetIndex) return current
+      songs.splice(index, 1)
+      songs.splice(targetIndex, 0, songName)
+      return { ...current, [activePlaylist]: songs }
+    })
+  }
+  const deletePlaylistSong = (songName: string) => {
+    if (!activePlaylist) return
+    setPlaylistSongs(current => {
+      const songs = (current[activePlaylist] || []).filter(name => name !== songName)
+      return { ...current, [activePlaylist]: songs }
+    })
+    setPlaylists(current => current.map(item => item[0] === activePlaylist ? [item[0], `곡 ${(playlistSongs[activePlaylist] || []).length - 1}개`] : item))
+  }
+  const saveDiary = () => {
+    const text = diaryText.trim()
+    if (!text) return
+    const now = new Date()
+    const date = `${now.getFullYear()}.${String(now.getMonth() + 1).padStart(2, '0')}.${String(now.getDate()).padStart(2, '0')}`
+    setDiaryEntries(current => [{ date, mood: diaryMood, text, track }, ...current])
+    setDiaryText('')
+    setDiaryWriting(false)
   }
   const searchResults = allSearchTracks.filter(item => item[0].toLowerCase().includes(query.toLowerCase()) || item[1].toLowerCase().includes(query.toLowerCase()))
   const detailTracks = activePlaylist ? (playlistSongs[activePlaylist] || []).map(name => allSearchTracks.find(item => item[0] === name)).filter((item): item is Track => Boolean(item)) : []
@@ -119,15 +165,18 @@ function App() {
   useEffect(() => {
     localStorage.setItem(PLAYLIST_SONGS_STORAGE_KEY, JSON.stringify(playlistSongs))
   }, [playlistSongs])
+  useEffect(() => {
+    localStorage.setItem(DIARY_STORAGE_KEY, JSON.stringify(diaryEntries))
+  }, [diaryEntries])
 
   const moodStyle = mood ? {
     '--mood-start': mood.start, '--mood-middle': mood.middle, '--mood-end': mood.end, '--mood-chip': mood.chip,
   } as React.CSSProperties : undefined
   return <main className={mood ? 'phone-shell mood-active' : 'phone-shell'} style={moodStyle}>
     <div className="status-bar" />
-    {activePlaylist ? <header className="playlist-detail-header"><button onClick={() => setActivePlaylist(null)} aria-label="라이브러리로 돌아가기"><img src={backIcon} alt="" /></button><h1>{activePlaylist}</h1></header> : tab === '탐색' || tab === '라이브러리' ? <header className="search-header"><span>음악 일기</span><h1>{tab}</h1></header> : <header className="app-header"><span className="logo-mark" /><h1>음악 일기</h1></header>}
-    <section className={activePlaylist ? 'content playlist-detail-content' : tab === '탐색' || tab === '라이브러리' ? 'content search-content' : 'content'} aria-label={`${tab} 화면`}>
-      {activePlaylist ? <><section className="detail-track-list">{detailTracks.map(item => <div className="detail-track-row" key={item[0]}><span className="artwork" /><span className="track-copy"><strong>{item[0]}</strong><span>{item[1]}</span></span><img src={orderIcon} alt="곡 순서 변경" /></div>)}</section><button className="add-song-button" onClick={() => { setTargetPlaylist(activePlaylist); setSelectedSongNames([]); setSongAddSheetOpen(true) }}>+ 곡 추가</button></> : tab === '홈' ? <>
+    {activePlaylist ? <header className="playlist-detail-header"><button onClick={() => setActivePlaylist(null)} aria-label="라이브러리로 돌아가기"><img src={backIcon} alt="" /></button><h1>{activePlaylist}</h1></header> : diaryWriting ? <header className="playlist-detail-header"><button onClick={() => setDiaryWriting(false)} aria-label="일기 목록으로 돌아가기"><img src={backIcon} alt="" /></button><h1>일기 쓰기</h1></header> : tab === '탐색' || tab === '라이브러리' || tab === '일기' ? <header className="search-header"><span>음악 일기</span><h1>{tab}</h1>{tab === '일기' && <button className="diary-write-button" onClick={() => setDiaryWriting(true)}>일기 쓰기</button>}</header> : <header className="app-header"><span className="logo-mark" /><h1>음악 일기</h1></header>}
+    <section className={activePlaylist ? 'content playlist-detail-content' : tab === '탐색' || tab === '라이브러리' || tab === '일기' ? 'content search-content' : 'content'} aria-label={`${tab} 화면`}>
+      {activePlaylist ? <><section className="detail-track-list">{detailTracks.map(item => <div className={draggedSong === item[0] ? 'detail-track-row dragging' : 'detail-track-row'} data-song-name={item[0]} key={item[0]}><span className="artwork" /><span className="track-copy"><strong>{item[0]}</strong><span>{item[1]}</span></span><div className="song-actions"><button className="order-handle" onPointerDown={event => { event.preventDefault(); event.currentTarget.setPointerCapture(event.pointerId); setDraggedSong(item[0]) }} onPointerMove={event => { if (!draggedSong) return; const target = document.elementFromPoint(event.clientX, event.clientY)?.closest<HTMLElement>('[data-song-name]')?.dataset.songName; if (target && target !== draggedSong) movePlaylistSong(draggedSong, target) }} onPointerUp={() => setDraggedSong(null)} onPointerCancel={() => setDraggedSong(null)} aria-label={`${item[0]} 순서 변경`}><img src={orderIcon} alt="" /></button><button className="song-delete-button" onClick={() => deletePlaylistSong(item[0])} aria-label={`${item[0]} 삭제`}>삭제</button></div></div>)}</section><button className="add-song-button" onClick={() => { setTargetPlaylist(activePlaylist); setSelectedSongNames([]); setSongAddSheetOpen(true) }}>+ 곡 추가</button></> : diaryWriting ? <section className="diary-form"><div className="diary-date">오늘 · {new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/ /g, '')}</div><div className="diary-form-section"><h2>오늘의 기분</h2><div className="diary-mood-list">{moods.map(item => <button key={item.name} className={diaryMood === item.name ? 'diary-mood selected' : 'diary-mood'} onClick={() => setDiaryMood(item.name)}>{item.name}</button>)}</div></div><div className="diary-form-section"><h2>오늘의 이야기</h2><label className="diary-textarea"><textarea value={diaryText} onChange={event => setDiaryText(event.target.value.slice(0, 300))} placeholder="오늘 들은 음악과 마음을 기록해 보세요." aria-label="일기 내용" /><span>{diaryText.length}/300</span></label></div><div className="diary-form-section"><h2>함께 들은 곡</h2><div className="diary-selected-track"><span className="artwork" /><span className="track-copy"><strong>{track[0]}</strong><span>{track[1]}</span></span></div></div><button className="create-button diary-save-button" onClick={saveDiary}>저장하기</button></section> : tab === '홈' ? <>
         <section className="mood-section"><h2>오늘 기분은 어때요?</h2><div className="mood-list">
           {moods.map(item => <button key={item.name} className={mood?.name === item.name ? 'mood-chip selected' : 'mood-chip'} onClick={() => setMood(item.name === mood?.name ? null : item)}>{item.name}</button>)}
         </div></section>
@@ -135,8 +184,8 @@ function App() {
         <section className="music-section"><h2>최근 재생</h2>{recents.map(item => <TrackRow key={item[0]} track={item} light={Boolean(mood)} onPlay={() => selectTrack(item)} />)}</section>
       </> : tab === '라이브러리' ? <>
         <div className="library-filters">{['전체', '좋아요', '최근재생'].map(filter => <button key={filter} onClick={() => setLibraryFilter(filter)} className={libraryFilter === filter ? 'library-filter active-filter' : 'library-filter'}>{filter}</button>)}</div>
-        <section className="playlist-section"><div className="playlist-heading"><h2>내 플레이리스트</h2><button onClick={() => setCreateSheetOpen(true)}>+ 만들기</button></div>{playlists.map(item => <TrackRow key={item[0]} track={item} light={false} onRowClick={() => setActivePlaylist(item[0])} onDelete={() => deletePlaylist(item[0])} onPlay={() => selectTrack(['Blue Hour', 'KIMDA'])} />)}</section>
-      </> : tab === '탐색' ? <>
+        <section className="playlist-section"><div className="playlist-heading"><h2>내 플레이리스트</h2><button onClick={() => setCreateSheetOpen(true)}>+ 만들기</button></div>{playlists.map(item => <TrackRow key={item[0]} track={item} light={false} onRowClick={() => setActivePlaylist(item[0])} onDelete={() => setPlaylistPendingDelete(item[0])} onPlay={() => selectTrack(['Blue Hour', 'KIMDA'])} />)}</section>
+      </> : tab === '일기' ? diaryEntries.length > 0 ? <section className="diary-list">{diaryEntries.map(entry => <article className="diary-card" key={`${entry.date}-${entry.text}`}><div className="diary-card-top"><time>{entry.date}</time><span>{entry.mood}</span></div><p>{entry.text}</p><div className="diary-track"><span className="artwork" /><span className="track-copy"><strong>{entry.track[0]}</strong><span>{entry.track[1]}</span></span><button className="icon-button play-button" onClick={() => selectTrack(entry.track)} aria-label={`${entry.track[0]} 재생`}><img src={diaryPlayIcon} alt="" /></button></div></article>)}</section> : <section className="diary-empty"><span className="diary-empty-mark" aria-hidden="true" /><h2>아직 쓴 일기가 없어요</h2><p>오늘 들은 음악과 마음을 기록해 보세요.</p><button className="create-button" onClick={() => setDiaryWriting(true)}>첫 일기 쓰기</button></section> : tab === '탐색' ? <>
         <label className="search-field"><input value={query} onChange={event => setQuery(event.target.value)} placeholder="검색" aria-label="음악 검색" /></label>
         <section className="search-results" aria-live="polite">{searchResults.slice(0, 2).map(item => <TrackRow key={item[0]} track={item} light={false} onPlay={() => selectTrack(item)} />)}{searchResults.length === 0 && <p className="no-results">검색 결과가 없어요.</p>}</section>
       </> : <section className="empty-screen"><h2>{tab}</h2><p>{tab} 화면은 곧 준비됩니다.</p></section>}
@@ -150,6 +199,7 @@ function App() {
       <button className="sheet-close" onClick={() => setPlayerOpen(false)} aria-label="플레이어 닫기">×</button><div className="sheet-artwork" /><h2>{track[0]}</h2><p>{track[1]}</p><input aria-label="재생 위치" type="range" defaultValue="28" /><div className="time-row"><span>1:04</span><span>3:42</span></div><div className="sheet-controls"><button aria-label="이전 곡">‹‹</button><button className="sheet-play" onClick={() => setPlaying(!playing)}><img src={playing ? pauseIcon : playIcon} alt="" /></button><button aria-label="다음 곡">››</button></div></section></div>}
     {createSheetOpen && <div className="create-overlay" onClick={() => setCreateSheetOpen(false)}><section className="create-sheet" onClick={event => event.stopPropagation()} aria-label="새 플레이리스트 만들기"><header><h2>새 플레이리스트</h2><button onClick={() => setCreateSheetOpen(false)} aria-label="닫기"><img src={closeIcon} alt="" /></button></header><input autoFocus value={playlistName} onChange={event => setPlaylistName(event.target.value)} onKeyDown={event => event.key === 'Enter' && createPlaylist()} placeholder="예: 비 오는 날 듣는 곡" aria-label="플레이리스트 이름" /><button className="create-button" onClick={createPlaylist}>만들기</button></section></div>}
     {songAddSheetOpen && <div className="create-overlay" onClick={() => setSongAddSheetOpen(false)}><section className="song-add-sheet" onClick={event => event.stopPropagation()} aria-label="플레이리스트에 곡 추가"><header><h2>곡 추가</h2><button onClick={() => setSongAddSheetOpen(false)} aria-label="닫기"><img src={closeIcon} alt="" /></button></header><label className="sheet-search"><input placeholder="검색" aria-label="추가할 곡 검색" /></label><div className="song-options">{availableSongs.map(item => { const selected = selectedSongNames.includes(item[0]); return <button key={item[0]} className="song-option" onClick={() => toggleSong(item[0])}><span className="artwork" /><span className="track-copy"><strong>{item[0]}</strong><span>{item[1]}</span></span><span className={selected ? 'circle-choice checked' : 'circle-choice'}>{selected ? '✓' : <img src={checkboxCircleIcon} alt="" />}</span></button> })}</div>{availableSongs.length === 0 && <p className="no-results">추가할 수 있는 곡이 없어요.</p>}<button className="create-button" onClick={addSongsToPlaylist}>{selectedSongNames.length}곡 추가</button></section></div>}
+    {playlistPendingDelete && <div className="create-overlay delete-overlay" onClick={() => setPlaylistPendingDelete(null)}><section className="delete-dialog" onClick={event => event.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="delete-title"><h2 id="delete-title">플레이리스트를 삭제할까요?</h2><p>삭제한 플레이리스트는 되돌릴 수 없어요.</p><div><button onClick={() => setPlaylistPendingDelete(null)}>취소</button><button className="confirm-delete" onClick={() => deletePlaylist(playlistPendingDelete)}>삭제</button></div></section></div>}
   </main>
 }
 
