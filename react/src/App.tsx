@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import playIcon from './assets/figma/play.svg'
 import playLightIcon from './assets/figma/play-light.svg'
 import pauseIcon from './assets/figma/pause.svg'
@@ -31,6 +31,7 @@ const recents: Track[] = [
 const allSearchTracks: Track[] = [
   ['Blue Hour', 'KIMDA'], ['After Rain', 'Sori'], ['Slow dance', 'Mondo Loops'],
 ]
+const PLAYLIST_STORAGE_KEY = 'music-diary-playlists'
 const tabs = [
   ['홈', homeIcon], ['라이브러리', libraryIcon], ['탐색', searchIcon], ['일기', diaryIcon], ['마이', userIcon],
 ]
@@ -50,7 +51,14 @@ function App() {
   const [libraryFilter, setLibraryFilter] = useState('전체')
   const [createSheetOpen, setCreateSheetOpen] = useState(false)
   const [playlistName, setPlaylistName] = useState('')
-  const [playlists, setPlaylists] = useState<Track[]>([])
+  const [playlists, setPlaylists] = useState<Track[]>(() => {
+    try {
+      const saved = localStorage.getItem(PLAYLIST_STORAGE_KEY)
+      return saved ? JSON.parse(saved) as Track[] : []
+    } catch {
+      return []
+    }
+  })
   const [playing, setPlaying] = useState(false)
   const [playerOpen, setPlayerOpen] = useState(false)
   const [track, setTrack] = useState<Track>(recommendations[0])
@@ -63,6 +71,10 @@ function App() {
     setCreateSheetOpen(false)
   }
   const searchResults = allSearchTracks.filter(item => item[0].toLowerCase().includes(query.toLowerCase()) || item[1].toLowerCase().includes(query.toLowerCase()))
+
+  useEffect(() => {
+    localStorage.setItem(PLAYLIST_STORAGE_KEY, JSON.stringify(playlists))
+  }, [playlists])
 
   const moodStyle = mood ? {
     '--mood-start': mood.start, '--mood-middle': mood.middle, '--mood-end': mood.end, '--mood-chip': mood.chip,
