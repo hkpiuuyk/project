@@ -10,6 +10,8 @@ import diaryIcon from './assets/figma/diary.svg'
 import userIcon from './assets/figma/user.svg'
 import closeIcon from './assets/figma/close.svg'
 import checkboxCircleIcon from './assets/figma/checkbox-circle.svg'
+import backIcon from './assets/figma/back.svg'
+import orderIcon from './assets/figma/order.svg'
 import './App.css'
 
 type Track = readonly [string, string]
@@ -37,11 +39,11 @@ const tabs = [
   ['홈', homeIcon], ['라이브러리', libraryIcon], ['탐색', searchIcon], ['일기', diaryIcon], ['마이', userIcon],
 ]
 
-function TrackRow({ track, onPlay, light }: { track: Track; onPlay: () => void; light: boolean }) {
-  return <div className="track-row">
+function TrackRow({ track, onPlay, light, onRowClick }: { track: Track; onPlay: () => void; light: boolean; onRowClick?: () => void }) {
+  return <div className={onRowClick ? 'track-row clickable-row' : 'track-row'} onClick={onRowClick}>
     <div className="artwork" aria-hidden="true" />
     <div className="track-copy"><strong>{track[0]}</strong><span>{track[1]}</span></div>
-    <button className="icon-button play-button" onClick={onPlay} aria-label={`${track[0]} 재생`}><img src={light ? playLightIcon : playIcon} alt="" /></button>
+    <button className="icon-button play-button" onClick={event => { event.stopPropagation(); onPlay() }} aria-label={`${track[0]} 재생`}><img src={light ? playLightIcon : playIcon} alt="" /></button>
   </div>
 }
 
@@ -63,6 +65,7 @@ function App() {
   const [songAddSheetOpen, setSongAddSheetOpen] = useState(false)
   const [targetPlaylist, setTargetPlaylist] = useState<string | null>(null)
   const [selectedSongNames, setSelectedSongNames] = useState<string[]>([])
+  const [activePlaylist, setActivePlaylist] = useState<string | null>(null)
   const [playing, setPlaying] = useState(false)
   const [playerOpen, setPlayerOpen] = useState(false)
   const [track, setTrack] = useState<Track>(recommendations[0])
@@ -82,8 +85,11 @@ function App() {
     if (!targetPlaylist || selectedSongNames.length === 0) return
     setPlaylists(current => current.map(item => item[0] === targetPlaylist ? [item[0], `곡 ${selectedSongNames.length}개`] : item))
     setSongAddSheetOpen(false)
+    setActivePlaylist(targetPlaylist)
   }
   const searchResults = allSearchTracks.filter(item => item[0].toLowerCase().includes(query.toLowerCase()) || item[1].toLowerCase().includes(query.toLowerCase()))
+  const activePlaylistData = playlists.find(item => item[0] === activePlaylist)
+  const detailTracks = activePlaylistData ? allSearchTracks.slice(0, Number.parseInt(activePlaylistData[1].replace(/\D/g, ''), 10) || 0) : []
 
   useEffect(() => {
     localStorage.setItem(PLAYLIST_STORAGE_KEY, JSON.stringify(playlists))
@@ -94,9 +100,9 @@ function App() {
   } as React.CSSProperties : undefined
   return <main className={mood ? 'phone-shell mood-active' : 'phone-shell'} style={moodStyle}>
     <div className="status-bar" />
-    {tab === '탐색' || tab === '라이브러리' ? <header className="search-header"><span>음악 일기</span><h1>{tab}</h1></header> : <header className="app-header"><span className="logo-mark" /><h1>음악 일기</h1></header>}
-    <section className={tab === '탐색' || tab === '라이브러리' ? 'content search-content' : 'content'} aria-label={`${tab} 화면`}>
-      {tab === '홈' ? <>
+    {activePlaylist ? <header className="playlist-detail-header"><button onClick={() => setActivePlaylist(null)} aria-label="라이브러리로 돌아가기"><img src={backIcon} alt="" /></button><h1>{activePlaylist}</h1></header> : tab === '탐색' || tab === '라이브러리' ? <header className="search-header"><span>음악 일기</span><h1>{tab}</h1></header> : <header className="app-header"><span className="logo-mark" /><h1>음악 일기</h1></header>}
+    <section className={activePlaylist ? 'content playlist-detail-content' : tab === '탐색' || tab === '라이브러리' ? 'content search-content' : 'content'} aria-label={`${tab} 화면`}>
+      {activePlaylist ? <><section className="detail-track-list">{detailTracks.map(item => <div className="detail-track-row" key={item[0]}><span className="artwork" /><span className="track-copy"><strong>{item[0]}</strong><span>{item[1]}</span></span><img src={orderIcon} alt="곡 순서 변경" /></div>)}</section><button className="add-song-button" onClick={() => { setTargetPlaylist(activePlaylist); setSelectedSongNames([]); setSongAddSheetOpen(true) }}>+ 곡 추가</button></> : tab === '홈' ? <>
         <section className="mood-section"><h2>오늘 기분은 어때요?</h2><div className="mood-list">
           {moods.map(item => <button key={item.name} className={mood?.name === item.name ? 'mood-chip selected' : 'mood-chip'} onClick={() => setMood(item.name === mood?.name ? null : item)}>{item.name}</button>)}
         </div></section>
@@ -104,7 +110,7 @@ function App() {
         <section className="music-section"><h2>최근 재생</h2>{recents.map(item => <TrackRow key={item[0]} track={item} light={Boolean(mood)} onPlay={() => selectTrack(item)} />)}</section>
       </> : tab === '라이브러리' ? <>
         <div className="library-filters">{['전체', '좋아요', '최근재생'].map(filter => <button key={filter} onClick={() => setLibraryFilter(filter)} className={libraryFilter === filter ? 'library-filter active-filter' : 'library-filter'}>{filter}</button>)}</div>
-        <section className="playlist-section"><div className="playlist-heading"><h2>내 플레이리스트</h2><button onClick={() => setCreateSheetOpen(true)}>+ 만들기</button></div>{playlists.map(item => <TrackRow key={item[0]} track={item} light={false} onPlay={() => selectTrack(['Blue Hour', 'KIMDA'])} />)}</section>
+        <section className="playlist-section"><div className="playlist-heading"><h2>내 플레이리스트</h2><button onClick={() => setCreateSheetOpen(true)}>+ 만들기</button></div>{playlists.map(item => <TrackRow key={item[0]} track={item} light={false} onRowClick={() => setActivePlaylist(item[0])} onPlay={() => selectTrack(['Blue Hour', 'KIMDA'])} />)}</section>
       </> : tab === '탐색' ? <>
         <label className="search-field"><input value={query} onChange={event => setQuery(event.target.value)} placeholder="검색" aria-label="음악 검색" /></label>
         <section className="search-results" aria-live="polite">{searchResults.slice(0, 2).map(item => <TrackRow key={item[0]} track={item} light={false} onPlay={() => selectTrack(item)} />)}{searchResults.length === 0 && <p className="no-results">검색 결과가 없어요.</p>}</section>
@@ -114,7 +120,7 @@ function App() {
       <span className="artwork mini-art" /><span className="mini-copy"><strong>{track[0]}</strong><span>{track[1]}</span></span>
       <span className="mini-control"><img src={playing ? pauseIcon : playIcon} alt="" /></span><img className="next-icon" src={nextIcon} alt="" />
     </button>
-    <nav className="nav-footer" aria-label="주요 메뉴">{tabs.map(([name, icon]) => <button key={name} className={tab === name ? 'tab active' : 'tab'} onClick={() => setTab(name)}><img src={icon} alt="" /><span>{name}</span></button>)}</nav>
+    <nav className="nav-footer" aria-label="주요 메뉴">{tabs.map(([name, icon]) => <button key={name} className={tab === name ? 'tab active' : 'tab'} onClick={() => { setActivePlaylist(null); setTab(name) }}><img src={icon} alt="" /><span>{name}</span></button>)}</nav>
     {playerOpen && <div className="player-overlay" onClick={() => setPlayerOpen(false)}><section className="player-sheet" onClick={event => event.stopPropagation()} aria-label="전체 플레이어">
       <button className="sheet-close" onClick={() => setPlayerOpen(false)} aria-label="플레이어 닫기">×</button><div className="sheet-artwork" /><h2>{track[0]}</h2><p>{track[1]}</p><input aria-label="재생 위치" type="range" defaultValue="28" /><div className="time-row"><span>1:04</span><span>3:42</span></div><div className="sheet-controls"><button aria-label="이전 곡">‹‹</button><button className="sheet-play" onClick={() => setPlaying(!playing)}><img src={playing ? pauseIcon : playIcon} alt="" /></button><button aria-label="다음 곡">››</button></div></section></div>}
     {createSheetOpen && <div className="create-overlay" onClick={() => setCreateSheetOpen(false)}><section className="create-sheet" onClick={event => event.stopPropagation()} aria-label="새 플레이리스트 만들기"><header><h2>새 플레이리스트</h2><button onClick={() => setCreateSheetOpen(false)} aria-label="닫기"><img src={closeIcon} alt="" /></button></header><input autoFocus value={playlistName} onChange={event => setPlaylistName(event.target.value)} onKeyDown={event => event.key === 'Enter' && createPlaylist()} placeholder="예: 비 오는 날 듣는 곡" aria-label="플레이리스트 이름" /><button className="create-button" onClick={createPlaylist}>만들기</button></section></div>}
