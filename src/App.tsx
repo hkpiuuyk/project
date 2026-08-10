@@ -104,6 +104,11 @@ function App() {
     setPlayerClosing(true)
     window.setTimeout(() => { setPlayerOpen(false); setPlayerClosing(false) }, 220)
   }
+  const playNextTrack = () => {
+    const currentIndex = allSearchTracks.findIndex(item => item[0] === track[0])
+    setTrack(allSearchTracks[(currentIndex + 1) % allSearchTracks.length])
+    setPlaying(true)
+  }
   const createPlaylist = () => {
     const name = playlistName.trim()
     if (!name) return
@@ -198,10 +203,7 @@ function App() {
         <section className="search-results" aria-live="polite">{searchResults.slice(0, 2).map(item => <TrackRow key={item[0]} track={item} light={false} onPlay={() => selectTrack(item)} />)}{searchResults.length === 0 && <p className="no-results">검색 결과가 없어요.</p>}</section>
       </> : <section className="empty-screen"><h2>{tab}</h2><p>{tab} 화면은 곧 준비됩니다.</p></section>}
     </section>
-    {miniPlayerVisible && !playerOpen && <button className="mini-player" onClick={() => setPlayerOpen(true)} aria-label="전체 플레이어 열기">
-      <span className="artwork mini-art" /><span className="mini-copy"><strong>{track[0]}</strong><span>{track[1]}</span></span>
-      <span className="mini-control"><img src={playing ? pauseIcon : playIcon} alt="" /></span><img className="next-icon" src={nextIcon} alt="" />
-    </button>}
+    {miniPlayerVisible && !playerOpen && <div className="mini-player"><button className="mini-player-main" onClick={() => setPlayerOpen(true)} aria-label="전체 플레이어 열기"><span className="artwork mini-art" /><span className="mini-copy"><strong>{track[0]}</strong><span>{track[1]}</span></span></button><button className="mini-control" onClick={() => setPlaying(!playing)} aria-label={playing ? '일시 정지' : '재생'}><img src={playing ? pauseIcon : playIcon} alt="" /></button><button className="mini-control" onClick={playNextTrack} aria-label="다음 곡"><img src={nextIcon} alt="" /></button></div>}
     <nav className="nav-footer" aria-label="주요 메뉴">{tabs.map(([name, icon]) => <button key={name} className={tab === name ? 'tab active' : 'tab'} onClick={() => { setActivePlaylist(null); setTab(name) }}><img src={icon} alt="" /><span>{name}</span></button>)}</nav>
     {playerOpen && <div className={playerClosing ? 'player-overlay player-closing' : 'player-overlay'} onClick={minimizePlayer}><section className={playerClosing ? 'player-sheet player-sheet-closing' : 'player-sheet'} onClick={event => event.stopPropagation()} onPointerDown={event => setPlayerDragStart(event.clientY)} onPointerUp={event => { if (playerDragStart !== null && event.clientY - playerDragStart > 80) minimizePlayer(); setPlayerDragStart(null) }} onPointerCancel={() => setPlayerDragStart(null)} aria-label="전체 플레이어"><div className="player-sheet-handle" aria-hidden="true" /><div className="sheet-artwork" /><h2>{track[0]}</h2><p>{track[1]}</p><input aria-label="재생 위치" type="range" defaultValue="28" /><div className="time-row"><span>1:04</span><span>3:42</span></div><div className="sheet-controls"><button aria-label="이전 곡">‹‹</button><button className="sheet-play" onClick={() => setPlaying(!playing)} aria-label={playing ? '일시 정지' : '재생'}><img src={playing ? pauseIcon : playIcon} alt="" /></button><button aria-label="다음 곡">››</button></div></section></div>}
     {createSheetOpen && <div className="create-overlay"><section className="create-sheet" aria-label="새 플레이리스트 만들기"><header><h2>새 플레이리스트</h2><button onClick={() => setCreateSheetOpen(false)} aria-label="닫기"><img src={closeIcon} alt="" /></button></header><input autoFocus value={playlistName} onChange={event => setPlaylistName(event.target.value)} onKeyDown={event => event.key === 'Enter' && createPlaylist()} placeholder="예: 비 오는 날 듣는 곡" aria-label="플레이리스트 이름" /><button className="create-button" onClick={createPlaylist}>만들기</button></section></div>}

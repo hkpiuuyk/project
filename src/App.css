@@ -36,12 +36,12 @@ h2 { margin: 0; font-size: 17px; line-height: 1.35; letter-spacing: -0.7px; font
 .mood-active .content { background: linear-gradient(180deg, var(--mood-start) 0%, var(--mood-middle) 60%, var(--mood-end) 100%); }
 .mood-active .mood-chip:not(.selected) { background: rgb(255 255 255 / .4); }
 .mood-active .artwork { background: rgb(255 255 255 / .45); }
-.mini-player { min-height: 56px; flex: 0 0 56px; border: 0; background: #fff; padding: 8px; display: flex; align-items: center; gap: 12px; text-align: left; }
+.mini-player { min-height: 56px; flex: 0 0 56px; background: #fff; padding: 8px; display: flex; align-items: center; gap: 8px; text-align: left; }.mini-player-main { min-width: 0; flex: 1; border: 0; background: transparent; padding: 0; display: flex; align-items: center; gap: 12px; text-align: left; }
 .mini-art { width: 40px; height: 40px; flex-basis: 40px; }
 .mini-copy { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
 .mini-copy strong { font-size: 14px; font-weight: 500; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .mini-copy span { color: #8a7a6d; font-size: 12px; line-height: 1.2; }
-.mini-control, .next-icon { width: 24px; height: 24px; flex: 0 0 24px; }
+.mini-control, .next-icon { width: 32px; height: 32px; flex: 0 0 32px; }.mini-control { display: grid; place-items: center; padding: 4px; border: 0; border-radius: 50%; background: transparent; }.mini-control img { width: 24px; height: 24px; }
 .nav-footer { height: 76px; flex: 0 0 76px; padding: 8px 0 20px; display: flex; justify-content: space-between; background: #fff; }
 .tab { width: 72px; min-width: 44px; border: 0; background: #fff; display: flex; flex-direction: column; gap: 2px; align-items: center; justify-content: center; color: #8a7a6d; font-size: 12px; line-height: 1; font-weight: 500; }
 .tab img { width: 24px; height: 24px; opacity: .55; filter: brightness(0) saturate(100%); }
