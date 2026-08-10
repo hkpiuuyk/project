@@ -34,13 +34,7 @@ const moods = [
   { name: '그리움', start: '#e8e8ff', middle: '#9292e4', end: '#5b5bd6', chip: '#4b4bbc' },
 ]
 
-const initialTracks: Track[] = [
-  { id: '1', title: 'Blue Hour', artist: 'KIMDA', coverUrl: 'https://picsum.photos/200/200?random=1' },
-  { id: '2', title: 'After Rain', artist: 'Sori', coverUrl: 'https://picsum.photos/200/200?random=2' },
-  { id: '3', title: 'Slow dance', artist: 'Mondo Loops', coverUrl: 'https://picsum.photos/200/200?random=3' },
-  { id: '4', title: 'Mellow morning', artist: 'Naru', coverUrl: 'https://picsum.photos/200/200?random=4' },
-]
-const recommendations = initialTracks
+const initialTracks: Track[] = []
 
 const PLAYLIST_STORAGE_KEY = 'music-diary-playlists'
 const PLAYLIST_SONGS_STORAGE_KEY = 'music-diary-playlist-songs'
@@ -216,7 +210,7 @@ function App() {
   const [allSearchTracks, setAllSearchTracks] = useState<Track[]>(() => {
     try {
       const saved = localStorage.getItem(TRACKS_STORAGE_KEY)
-      return saved ? JSON.parse(saved) as Track[] : initialTracks
+      return saved ? (JSON.parse(saved) as Track[]).filter(item => Boolean(item.audioUrl)) : initialTracks
     } catch {
       return initialTracks
     }
@@ -257,7 +251,7 @@ function App() {
   const [diaryText, setDiaryText] = useState('')
   const [myScreen, setMyScreen] = useState<'main' | 'diaries' | 'settings' | 'terms'>('main')
   const [autoplay, setAutoplay] = useState(true)
-  const [track, setTrack] = useState<Track>(recommendations[0])
+  const [track, setTrack] = useState<Track>({ id: '', title: '', artist: '' })
   const [playing, setPlaying] = useState(false)
   const [playerOpen, setPlayerOpen] = useState(false)
   const [playerClosing, setPlayerClosing] = useState(false)
@@ -513,7 +507,8 @@ const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         <section className="mood-section"><h2>오늘 기분은 어때요?</h2><div className="mood-list">
           {moods.map(item => <button key={item.name} className={mood?.name === item.name ? 'mood-chip selected' : 'mood-chip'} onClick={() => setMood(item.name === mood?.name ? null : item)}>{item.name}</button>)}
         </div></section>
-        <section className="music-section"><h2>오늘의 추천</h2>{allSearchTracks.slice(0, 2).map(item => <TrackRow key={item.id} track={item} light={Boolean(mood)} onPlay={() => selectTrack(item)} />)}</section>
+        <label className="home-upload-button"><input type="file" accept="audio/mpeg,audio/mp3" onChange={handleFileUpload} />MP3 업로드</label>
+        <section className="music-section"><h2>오늘의 추천</h2>{allSearchTracks.slice(0, 2).map(item => <TrackRow key={item.id} track={item} light={Boolean(mood)} onPlay={() => selectTrack(item)} />)}{allSearchTracks.length === 0 && <p className="no-results">업로드한 음악이 없어요.</p>}</section>
         <section className="music-section"><h2>최근 재생</h2>{allSearchTracks.slice(2, 4).map(item => <TrackRow key={item.id} track={item} light={Boolean(mood)} onPlay={() => selectTrack(item)} />)}</section>
       </> : tab === '라이브러리' ? <>
         <div className="library-filters">{['전체', '좋아요', '최근재생'].map(filter => <button key={filter} onClick={() => setLibraryFilter(filter)} className={libraryFilter === filter ? 'library-filter active-filter' : 'library-filter'}>{filter}</button>)}</div>
