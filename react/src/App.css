@@ -37,7 +37,7 @@ h2 { margin: 0; font-size: 17px; line-height: 1.35; letter-spacing: -0.7px; font
 .mini-control, .next-icon { width: 24px; height: 24px; flex: 0 0 24px; }
 .nav-footer { height: 76px; flex: 0 0 76px; padding: 8px 0 20px; display: flex; justify-content: space-between; background: #fff; }
 .tab { width: 72px; min-width: 44px; border: 0; background: #fff; display: flex; flex-direction: column; gap: 2px; align-items: center; justify-content: center; color: #8a7a6d; font-size: 12px; line-height: 1; font-weight: 500; }
-.tab img { width: 24px; height: 24px; opacity: .55; }
+.tab img { width: 24px; height: 24px; opacity: .55; filter: brightness(0) saturate(100%); }
 .tab.active { color: #1c2024; font-weight: 700; }.tab.active img { opacity: 1; }
 .empty-screen { height: 100%; display: grid; place-content: center; gap: 8px; text-align: center; color: #8a7a6d; }.empty-screen h2 { color: #1c2024; }.empty-screen p { margin: 0; font-size: 13px; }
 .player-overlay { position: fixed; inset: 0; z-index: 10; background: rgb(28 32 36 / .28); display: flex; align-items: flex-end; justify-content: center; }
