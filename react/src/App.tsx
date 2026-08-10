@@ -27,6 +27,9 @@ const recents: Track[] = [
   ['Slow dance', 'Mondo Loops'],
   ['Mellow morning', 'Naru'],
 ]
+const allSearchTracks: Track[] = [
+  ['Blue Hour', 'KIMDA'], ['After Rain', 'Sori'], ['Slow dance', 'Mondo Loops'],
+]
 const tabs = [
   ['홈', homeIcon], ['라이브러리', libraryIcon], ['탐색', searchIcon], ['일기', diaryIcon], ['마이', userIcon],
 ]
@@ -42,24 +45,29 @@ function TrackRow({ track, onPlay, light }: { track: Track; onPlay: () => void; 
 function App() {
   const [mood, setMood] = useState<typeof moods[number] | null>(null)
   const [tab, setTab] = useState('홈')
+  const [query, setQuery] = useState('')
   const [playing, setPlaying] = useState(false)
   const [playerOpen, setPlayerOpen] = useState(false)
   const [track, setTrack] = useState<Track>(recommendations[0])
   const selectTrack = (nextTrack: Track) => { setTrack(nextTrack); setPlaying(true) }
+  const searchResults = allSearchTracks.filter(item => item[0].toLowerCase().includes(query.toLowerCase()) || item[1].toLowerCase().includes(query.toLowerCase()))
 
   const moodStyle = mood ? {
     '--mood-start': mood.start, '--mood-middle': mood.middle, '--mood-end': mood.end, '--mood-chip': mood.chip,
   } as React.CSSProperties : undefined
   return <main className={mood ? 'phone-shell mood-active' : 'phone-shell'} style={moodStyle}>
     <div className="status-bar" />
-    <header className="app-header"><span className="logo-mark" /><h1>음악 일기</h1></header>
-    <section className="content" aria-label={`${tab} 화면`}>
+    {tab === '탐색' ? <header className="search-header"><span>음악 일기</span><h1>탐색</h1></header> : <header className="app-header"><span className="logo-mark" /><h1>음악 일기</h1></header>}
+    <section className={tab === '탐색' ? 'content search-content' : 'content'} aria-label={`${tab} 화면`}>
       {tab === '홈' ? <>
         <section className="mood-section"><h2>오늘 기분은 어때요?</h2><div className="mood-list">
           {moods.map(item => <button key={item.name} className={mood?.name === item.name ? 'mood-chip selected' : 'mood-chip'} onClick={() => setMood(item.name === mood?.name ? null : item)}>{item.name}</button>)}
         </div></section>
         <section className="music-section"><h2>오늘의 추천</h2>{recommendations.map(item => <TrackRow key={item[0]} track={item} light={Boolean(mood)} onPlay={() => selectTrack(item)} />)}</section>
         <section className="music-section"><h2>최근 재생</h2>{recents.map(item => <TrackRow key={item[0]} track={item} light={Boolean(mood)} onPlay={() => selectTrack(item)} />)}</section>
+      </> : tab === '탐색' ? <>
+        <label className="search-field"><input value={query} onChange={event => setQuery(event.target.value)} placeholder="검색" aria-label="음악 검색" /></label>
+        <section className="search-results" aria-live="polite">{searchResults.slice(0, 2).map(item => <TrackRow key={item[0]} track={item} light={false} onPlay={() => selectTrack(item)} />)}{searchResults.length === 0 && <p className="no-results">검색 결과가 없어요.</p>}</section>
       </> : <section className="empty-screen"><h2>{tab}</h2><p>{tab} 화면은 곧 준비됩니다.</p></section>}
     </section>
     <button className="mini-player" onClick={() => setPlayerOpen(true)} aria-label="전체 플레이어 열기">
