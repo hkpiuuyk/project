@@ -50,7 +50,7 @@ function App() {
   const [libraryFilter, setLibraryFilter] = useState('전체')
   const [createSheetOpen, setCreateSheetOpen] = useState(false)
   const [playlistName, setPlaylistName] = useState('')
-  const [playlists, setPlaylists] = useState<Track[]>([['아침의 공기', '곡 12개'], ['비 오는 날', '곡 8개']])
+  const [playlists, setPlaylists] = useState<Track[]>([])
   const [playing, setPlaying] = useState(false)
   const [playerOpen, setPlayerOpen] = useState(false)
   const [track, setTrack] = useState<Track>(recommendations[0])
@@ -79,7 +79,6 @@ function App() {
         <section className="music-section"><h2>최근 재생</h2>{recents.map(item => <TrackRow key={item[0]} track={item} light={Boolean(mood)} onPlay={() => selectTrack(item)} />)}</section>
       </> : tab === '라이브러리' ? <>
         <div className="library-filters">{['전체', '좋아요', '최근재생'].map(filter => <button key={filter} onClick={() => setLibraryFilter(filter)} className={libraryFilter === filter ? 'library-filter active-filter' : 'library-filter'}>{filter}</button>)}</div>
-        <section className="library-tracks">{recommendations.map(item => <TrackRow key={item[0]} track={item} light={false} onPlay={() => selectTrack(item)} />)}</section>
         <section className="playlist-section"><div className="playlist-heading"><h2>내 플레이리스트</h2><button onClick={() => setCreateSheetOpen(true)}>+ 만들기</button></div>{playlists.map(item => <TrackRow key={item[0]} track={item} light={false} onPlay={() => selectTrack(['Blue Hour', 'KIMDA'])} />)}</section>
       </> : tab === '탐색' ? <>
         <label className="search-field"><input value={query} onChange={event => setQuery(event.target.value)} placeholder="검색" aria-label="음악 검색" /></label>
