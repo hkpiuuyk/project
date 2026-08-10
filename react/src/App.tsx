@@ -16,6 +16,7 @@ import diaryPlayIcon from './assets/figma/diary-play.svg'
 import './App.css'
 
 type Track = readonly [string, string]
+type DiaryEntry = { date: string; mood: string; text: string; track: Track }
 
 const moods = [
   { name: '차분함', start: '#e0fbf5', middle: '#86ead4', end: '#5bcfb3', chip: '#4fbfa0' },
@@ -35,12 +36,9 @@ const recents: Track[] = [
 const allSearchTracks: Track[] = [
   ['Blue Hour', 'KIMDA'], ['After Rain', 'Sori'], ['Slow dance', 'Mondo Loops'],
 ]
-const diaryEntries = [
-  { date: '2026.08.07', mood: '위로', text: '오늘 하루 들었던 곡들이 마음을 편하게 해줬다.', track: ['After Rain', 'Sori'] as Track },
-  { date: '2026.08.05', mood: '집중', text: '집중이 잘 안 됐는데 이 플레이리스트 덕분에 마무리했다.', track: ['Blue Hour', 'KIMDA'] as Track },
-]
 const PLAYLIST_STORAGE_KEY = 'music-diary-playlists'
 const PLAYLIST_SONGS_STORAGE_KEY = 'music-diary-playlist-songs'
+const DIARY_STORAGE_KEY = 'music-diary-entries'
 const tabs = [
   ['홈', homeIcon], ['라이브러리', libraryIcon], ['탐색', searchIcon], ['일기', diaryIcon], ['마이', userIcon],
 ]
@@ -83,6 +81,17 @@ function App() {
   const [selectedSongNames, setSelectedSongNames] = useState<string[]>([])
   const [activePlaylist, setActivePlaylist] = useState<string | null>(null)
   const [draggedSong, setDraggedSong] = useState<string | null>(null)
+  const [diaryWriting, setDiaryWriting] = useState(false)
+  const [diaryEntries, setDiaryEntries] = useState<DiaryEntry[]>(() => {
+    try {
+      const saved = localStorage.getItem(DIARY_STORAGE_KEY)
+      return saved ? JSON.parse(saved) as DiaryEntry[] : []
+    } catch {
+      return []
+    }
+  })
+  const [diaryMood, setDiaryMood] = useState('차분함')
+  const [diaryText, setDiaryText] = useState('')
   const [playing, setPlaying] = useState(false)
   const [playerOpen, setPlayerOpen] = useState(false)
   const [track, setTrack] = useState<Track>(recommendations[0])
@@ -137,6 +146,15 @@ function App() {
     })
     setPlaylists(current => current.map(item => item[0] === activePlaylist ? [item[0], `곡 ${(playlistSongs[activePlaylist] || []).length - 1}개`] : item))
   }
+  const saveDiary = () => {
+    const text = diaryText.trim()
+    if (!text) return
+    const now = new Date()
+    const date = `${now.getFullYear()}.${String(now.getMonth() + 1).padStart(2, '0')}.${String(now.getDate()).padStart(2, '0')}`
+    setDiaryEntries(current => [{ date, mood: diaryMood, text, track }, ...current])
+    setDiaryText('')
+    setDiaryWriting(false)
+  }
   const searchResults = allSearchTracks.filter(item => item[0].toLowerCase().includes(query.toLowerCase()) || item[1].toLowerCase().includes(query.toLowerCase()))
   const detailTracks = activePlaylist ? (playlistSongs[activePlaylist] || []).map(name => allSearchTracks.find(item => item[0] === name)).filter((item): item is Track => Boolean(item)) : []
   const availableSongs = targetPlaylist ? allSearchTracks.filter(item => !(playlistSongs[targetPlaylist] || []).includes(item[0])) : allSearchTracks
@@ -147,15 +165,18 @@ function App() {
   useEffect(() => {
     localStorage.setItem(PLAYLIST_SONGS_STORAGE_KEY, JSON.stringify(playlistSongs))
   }, [playlistSongs])
+  useEffect(() => {
+    localStorage.setItem(DIARY_STORAGE_KEY, JSON.stringify(diaryEntries))
+  }, [diaryEntries])
 
   const moodStyle = mood ? {
     '--mood-start': mood.start, '--mood-middle': mood.middle, '--mood-end': mood.end, '--mood-chip': mood.chip,
   } as React.CSSProperties : undefined
   return <main className={mood ? 'phone-shell mood-active' : 'phone-shell'} style={moodStyle}>
     <div className="status-bar" />
-    {activePlaylist ? <header className="playlist-detail-header"><button onClick={() => setActivePlaylist(null)} aria-label="라이브러리로 돌아가기"><img src={backIcon} alt="" /></button><h1>{activePlaylist}</h1></header> : tab === '탐색' || tab === '라이브러리' || tab === '일기' ? <header className="search-header"><span>음악 일기</span><h1>{tab}</h1>{tab === '일기' && <button className="diary-write-button">일기 쓰기</button>}</header> : <header className="app-header"><span className="logo-mark" /><h1>음악 일기</h1></header>}
+    {activePlaylist ? <header className="playlist-detail-header"><button onClick={() => setActivePlaylist(null)} aria-label="라이브러리로 돌아가기"><img src={backIcon} alt="" /></button><h1>{activePlaylist}</h1></header> : diaryWriting ? <header className="playlist-detail-header"><button onClick={() => setDiaryWriting(false)} aria-label="일기 목록으로 돌아가기"><img src={backIcon} alt="" /></button><h1>일기 쓰기</h1></header> : tab === '탐색' || tab === '라이브러리' || tab === '일기' ? <header className="search-header"><span>음악 일기</span><h1>{tab}</h1>{tab === '일기' && <button className="diary-write-button" onClick={() => setDiaryWriting(true)}>일기 쓰기</button>}</header> : <header className="app-header"><span className="logo-mark" /><h1>음악 일기</h1></header>}
     <section className={activePlaylist ? 'content playlist-detail-content' : tab === '탐색' || tab === '라이브러리' || tab === '일기' ? 'content search-content' : 'content'} aria-label={`${tab} 화면`}>
-      {activePlaylist ? <><section className="detail-track-list">{detailTracks.map(item => <div className={draggedSong === item[0] ? 'detail-track-row dragging' : 'detail-track-row'} data-song-name={item[0]} key={item[0]}><span className="artwork" /><span className="track-copy"><strong>{item[0]}</strong><span>{item[1]}</span></span><div className="song-actions"><button className="order-handle" onPointerDown={event => { event.preventDefault(); event.currentTarget.setPointerCapture(event.pointerId); setDraggedSong(item[0]) }} onPointerMove={event => { if (!draggedSong) return; const target = document.elementFromPoint(event.clientX, event.clientY)?.closest<HTMLElement>('[data-song-name]')?.dataset.songName; if (target && target !== draggedSong) movePlaylistSong(draggedSong, target) }} onPointerUp={() => setDraggedSong(null)} onPointerCancel={() => setDraggedSong(null)} aria-label={`${item[0]} 순서 변경`}><img src={orderIcon} alt="" /></button><button className="song-delete-button" onClick={() => deletePlaylistSong(item[0])} aria-label={`${item[0]} 삭제`}>삭제</button></div></div>)}</section><button className="add-song-button" onClick={() => { setTargetPlaylist(activePlaylist); setSelectedSongNames([]); setSongAddSheetOpen(true) }}>+ 곡 추가</button></> : tab === '홈' ? <>
+      {activePlaylist ? <><section className="detail-track-list">{detailTracks.map(item => <div className={draggedSong === item[0] ? 'detail-track-row dragging' : 'detail-track-row'} data-song-name={item[0]} key={item[0]}><span className="artwork" /><span className="track-copy"><strong>{item[0]}</strong><span>{item[1]}</span></span><div className="song-actions"><button className="order-handle" onPointerDown={event => { event.preventDefault(); event.currentTarget.setPointerCapture(event.pointerId); setDraggedSong(item[0]) }} onPointerMove={event => { if (!draggedSong) return; const target = document.elementFromPoint(event.clientX, event.clientY)?.closest<HTMLElement>('[data-song-name]')?.dataset.songName; if (target && target !== draggedSong) movePlaylistSong(draggedSong, target) }} onPointerUp={() => setDraggedSong(null)} onPointerCancel={() => setDraggedSong(null)} aria-label={`${item[0]} 순서 변경`}><img src={orderIcon} alt="" /></button><button className="song-delete-button" onClick={() => deletePlaylistSong(item[0])} aria-label={`${item[0]} 삭제`}>삭제</button></div></div>)}</section><button className="add-song-button" onClick={() => { setTargetPlaylist(activePlaylist); setSelectedSongNames([]); setSongAddSheetOpen(true) }}>+ 곡 추가</button></> : diaryWriting ? <section className="diary-form"><div className="diary-date">오늘 · {new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/ /g, '')}</div><div className="diary-form-section"><h2>오늘의 기분</h2><div className="diary-mood-list">{moods.map(item => <button key={item.name} className={diaryMood === item.name ? 'diary-mood selected' : 'diary-mood'} onClick={() => setDiaryMood(item.name)}>{item.name}</button>)}</div></div><div className="diary-form-section"><h2>오늘의 이야기</h2><label className="diary-textarea"><textarea value={diaryText} onChange={event => setDiaryText(event.target.value.slice(0, 300))} placeholder="오늘 들은 음악과 마음을 기록해 보세요." aria-label="일기 내용" /><span>{diaryText.length}/300</span></label></div><div className="diary-form-section"><h2>함께 들은 곡</h2><div className="diary-selected-track"><span className="artwork" /><span className="track-copy"><strong>{track[0]}</strong><span>{track[1]}</span></span></div></div><button className="create-button diary-save-button" onClick={saveDiary}>저장하기</button></section> : tab === '홈' ? <>
         <section className="mood-section"><h2>오늘 기분은 어때요?</h2><div className="mood-list">
           {moods.map(item => <button key={item.name} className={mood?.name === item.name ? 'mood-chip selected' : 'mood-chip'} onClick={() => setMood(item.name === mood?.name ? null : item)}>{item.name}</button>)}
         </div></section>
