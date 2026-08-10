@@ -11,7 +11,6 @@ import userIcon from './assets/figma/user.svg'
 import closeIcon from './assets/figma/close.svg'
 import checkboxCircleIcon from './assets/figma/checkbox-circle.svg'
 import backIcon from './assets/figma/back.svg'
-import orderIcon from './assets/figma/order.svg'
 import './App.css'
 
 type Track = readonly [string, string]
@@ -111,6 +110,25 @@ function App() {
     if (activePlaylist === name) setActivePlaylist(null)
     setPlaylistPendingDelete(null)
   }
+  const movePlaylistSong = (songName: string, direction: -1 | 1) => {
+    if (!activePlaylist) return
+    setPlaylistSongs(current => {
+      const songs = [...(current[activePlaylist] || [])]
+      const index = songs.indexOf(songName)
+      const nextIndex = index + direction
+      if (index < 0 || nextIndex < 0 || nextIndex >= songs.length) return current
+      ;[songs[index], songs[nextIndex]] = [songs[nextIndex], songs[index]]
+      return { ...current, [activePlaylist]: songs }
+    })
+  }
+  const deletePlaylistSong = (songName: string) => {
+    if (!activePlaylist) return
+    setPlaylistSongs(current => {
+      const songs = (current[activePlaylist] || []).filter(name => name !== songName)
+      return { ...current, [activePlaylist]: songs }
+    })
+    setPlaylists(current => current.map(item => item[0] === activePlaylist ? [item[0], `곡 ${(playlistSongs[activePlaylist] || []).length - 1}개`] : item))
+  }
   const searchResults = allSearchTracks.filter(item => item[0].toLowerCase().includes(query.toLowerCase()) || item[1].toLowerCase().includes(query.toLowerCase()))
   const detailTracks = activePlaylist ? (playlistSongs[activePlaylist] || []).map(name => allSearchTracks.find(item => item[0] === name)).filter((item): item is Track => Boolean(item)) : []
   const availableSongs = targetPlaylist ? allSearchTracks.filter(item => !(playlistSongs[targetPlaylist] || []).includes(item[0])) : allSearchTracks
@@ -129,7 +147,7 @@ function App() {
     <div className="status-bar" />
     {activePlaylist ? <header className="playlist-detail-header"><button onClick={() => setActivePlaylist(null)} aria-label="라이브러리로 돌아가기"><img src={backIcon} alt="" /></button><h1>{activePlaylist}</h1></header> : tab === '탐색' || tab === '라이브러리' ? <header className="search-header"><span>음악 일기</span><h1>{tab}</h1></header> : <header className="app-header"><span className="logo-mark" /><h1>음악 일기</h1></header>}
     <section className={activePlaylist ? 'content playlist-detail-content' : tab === '탐색' || tab === '라이브러리' ? 'content search-content' : 'content'} aria-label={`${tab} 화면`}>
-      {activePlaylist ? <><section className="detail-track-list">{detailTracks.map(item => <div className="detail-track-row" key={item[0]}><span className="artwork" /><span className="track-copy"><strong>{item[0]}</strong><span>{item[1]}</span></span><img src={orderIcon} alt="곡 순서 변경" /></div>)}</section><button className="add-song-button" onClick={() => { setTargetPlaylist(activePlaylist); setSelectedSongNames([]); setSongAddSheetOpen(true) }}>+ 곡 추가</button></> : tab === '홈' ? <>
+      {activePlaylist ? <><section className="detail-track-list">{detailTracks.map((item, index) => <div className="detail-track-row" key={item[0]}><span className="artwork" /><span className="track-copy"><strong>{item[0]}</strong><span>{item[1]}</span></span><div className="song-actions"><button className="song-order-button" onClick={() => movePlaylistSong(item[0], -1)} disabled={index === 0} aria-label={`${item[0]} 위로 이동`}>↑</button><button className="song-order-button" onClick={() => movePlaylistSong(item[0], 1)} disabled={index === detailTracks.length - 1} aria-label={`${item[0]} 아래로 이동`}>↓</button><button className="song-delete-button" onClick={() => deletePlaylistSong(item[0])} aria-label={`${item[0]} 삭제`}>삭제</button></div></div>)}</section><button className="add-song-button" onClick={() => { setTargetPlaylist(activePlaylist); setSelectedSongNames([]); setSongAddSheetOpen(true) }}>+ 곡 추가</button></> : tab === '홈' ? <>
         <section className="mood-section"><h2>오늘 기분은 어때요?</h2><div className="mood-list">
           {moods.map(item => <button key={item.name} className={mood?.name === item.name ? 'mood-chip selected' : 'mood-chip'} onClick={() => setMood(item.name === mood?.name ? null : item)}>{item.name}</button>)}
         </div></section>
