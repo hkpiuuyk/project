@@ -11,6 +11,7 @@ import userIcon from './assets/figma/user.svg'
 import closeIcon from './assets/figma/close.svg'
 import checkboxCircleIcon from './assets/figma/checkbox-circle.svg'
 import backIcon from './assets/figma/back.svg'
+import orderIcon from './assets/figma/order.svg'
 import './App.css'
 
 type Track = readonly [string, string]
@@ -76,6 +77,7 @@ function App() {
   const [playlistPendingDelete, setPlaylistPendingDelete] = useState<string | null>(null)
   const [selectedSongNames, setSelectedSongNames] = useState<string[]>([])
   const [activePlaylist, setActivePlaylist] = useState<string | null>(null)
+  const [draggedSong, setDraggedSong] = useState<string | null>(null)
   const [playing, setPlaying] = useState(false)
   const [playerOpen, setPlayerOpen] = useState(false)
   const [track, setTrack] = useState<Track>(recommendations[0])
@@ -110,14 +112,15 @@ function App() {
     if (activePlaylist === name) setActivePlaylist(null)
     setPlaylistPendingDelete(null)
   }
-  const movePlaylistSong = (songName: string, direction: -1 | 1) => {
+  const movePlaylistSong = (songName: string, targetSongName: string) => {
     if (!activePlaylist) return
     setPlaylistSongs(current => {
       const songs = [...(current[activePlaylist] || [])]
       const index = songs.indexOf(songName)
-      const nextIndex = index + direction
-      if (index < 0 || nextIndex < 0 || nextIndex >= songs.length) return current
-      ;[songs[index], songs[nextIndex]] = [songs[nextIndex], songs[index]]
+      const targetIndex = songs.indexOf(targetSongName)
+      if (index < 0 || targetIndex < 0 || index === targetIndex) return current
+      songs.splice(index, 1)
+      songs.splice(targetIndex, 0, songName)
       return { ...current, [activePlaylist]: songs }
     })
   }
@@ -147,7 +150,7 @@ function App() {
     <div className="status-bar" />
     {activePlaylist ? <header className="playlist-detail-header"><button onClick={() => setActivePlaylist(null)} aria-label="라이브러리로 돌아가기"><img src={backIcon} alt="" /></button><h1>{activePlaylist}</h1></header> : tab === '탐색' || tab === '라이브러리' ? <header className="search-header"><span>음악 일기</span><h1>{tab}</h1></header> : <header className="app-header"><span className="logo-mark" /><h1>음악 일기</h1></header>}
     <section className={activePlaylist ? 'content playlist-detail-content' : tab === '탐색' || tab === '라이브러리' ? 'content search-content' : 'content'} aria-label={`${tab} 화면`}>
-      {activePlaylist ? <><section className="detail-track-list">{detailTracks.map((item, index) => <div className="detail-track-row" key={item[0]}><span className="artwork" /><span className="track-copy"><strong>{item[0]}</strong><span>{item[1]}</span></span><div className="song-actions"><button className="song-order-button" onClick={() => movePlaylistSong(item[0], -1)} disabled={index === 0} aria-label={`${item[0]} 위로 이동`}>↑</button><button className="song-order-button" onClick={() => movePlaylistSong(item[0], 1)} disabled={index === detailTracks.length - 1} aria-label={`${item[0]} 아래로 이동`}>↓</button><button className="song-delete-button" onClick={() => deletePlaylistSong(item[0])} aria-label={`${item[0]} 삭제`}>삭제</button></div></div>)}</section><button className="add-song-button" onClick={() => { setTargetPlaylist(activePlaylist); setSelectedSongNames([]); setSongAddSheetOpen(true) }}>+ 곡 추가</button></> : tab === '홈' ? <>
+      {activePlaylist ? <><section className="detail-track-list">{detailTracks.map(item => <div className={draggedSong === item[0] ? 'detail-track-row dragging' : 'detail-track-row'} key={item[0]} draggable onDragStart={() => setDraggedSong(item[0])} onDragOver={event => event.preventDefault()} onDrop={() => { if (draggedSong) movePlaylistSong(draggedSong, item[0]); setDraggedSong(null) }} onDragEnd={() => setDraggedSong(null)}><span className="artwork" /><span className="track-copy"><strong>{item[0]}</strong><span>{item[1]}</span></span><div className="song-actions"><img className="order-handle" src={orderIcon} alt="곡 순서 변경" /><button className="song-delete-button" onClick={() => deletePlaylistSong(item[0])} aria-label={`${item[0]} 삭제`}>삭제</button></div></div>)}</section><button className="add-song-button" onClick={() => { setTargetPlaylist(activePlaylist); setSelectedSongNames([]); setSongAddSheetOpen(true) }}>+ 곡 추가</button></> : tab === '홈' ? <>
         <section className="mood-section"><h2>오늘 기분은 어때요?</h2><div className="mood-list">
           {moods.map(item => <button key={item.name} className={mood?.name === item.name ? 'mood-chip selected' : 'mood-chip'} onClick={() => setMood(item.name === mood?.name ? null : item)}>{item.name}</button>)}
         </div></section>
