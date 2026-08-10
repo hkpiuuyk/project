@@ -40,10 +40,11 @@ const tabs = [
   ['홈', homeIcon], ['라이브러리', libraryIcon], ['탐색', searchIcon], ['일기', diaryIcon], ['마이', userIcon],
 ]
 
-function TrackRow({ track, onPlay, light, onRowClick }: { track: Track; onPlay: () => void; light: boolean; onRowClick?: () => void }) {
+function TrackRow({ track, onPlay, light, onRowClick, onDelete }: { track: Track; onPlay: () => void; light: boolean; onRowClick?: () => void; onDelete?: () => void }) {
   return <div className={onRowClick ? 'track-row clickable-row' : 'track-row'} onClick={onRowClick}>
     <div className="artwork" aria-hidden="true" />
     <div className="track-copy"><strong>{track[0]}</strong><span>{track[1]}</span></div>
+    {onDelete && <button className="playlist-delete" onClick={event => { event.stopPropagation(); onDelete() }} aria-label={`${track[0]} 삭제`}>삭제</button>}
     <button className="icon-button play-button" onClick={event => { event.stopPropagation(); onPlay() }} aria-label={`${track[0]} 재생`}><img src={light ? playLightIcon : playIcon} alt="" /></button>
   </div>
 }
@@ -100,6 +101,15 @@ function App() {
     setSongAddSheetOpen(false)
     setActivePlaylist(targetPlaylist)
   }
+  const deletePlaylist = (name: string) => {
+    if (!window.confirm(`'${name}' 플레이리스트를 삭제할까요?`)) return
+    setPlaylists(current => current.filter(item => item[0] !== name))
+    setPlaylistSongs(current => {
+      const { [name]: _removed, ...remaining } = current
+      return remaining
+    })
+    if (activePlaylist === name) setActivePlaylist(null)
+  }
   const searchResults = allSearchTracks.filter(item => item[0].toLowerCase().includes(query.toLowerCase()) || item[1].toLowerCase().includes(query.toLowerCase()))
   const detailTracks = activePlaylist ? (playlistSongs[activePlaylist] || []).map(name => allSearchTracks.find(item => item[0] === name)).filter((item): item is Track => Boolean(item)) : []
   const availableSongs = targetPlaylist ? allSearchTracks.filter(item => !(playlistSongs[targetPlaylist] || []).includes(item[0])) : allSearchTracks
@@ -126,7 +136,7 @@ function App() {
         <section className="music-section"><h2>최근 재생</h2>{recents.map(item => <TrackRow key={item[0]} track={item} light={Boolean(mood)} onPlay={() => selectTrack(item)} />)}</section>
       </> : tab === '라이브러리' ? <>
         <div className="library-filters">{['전체', '좋아요', '최근재생'].map(filter => <button key={filter} onClick={() => setLibraryFilter(filter)} className={libraryFilter === filter ? 'library-filter active-filter' : 'library-filter'}>{filter}</button>)}</div>
-        <section className="playlist-section"><div className="playlist-heading"><h2>내 플레이리스트</h2><button onClick={() => setCreateSheetOpen(true)}>+ 만들기</button></div>{playlists.map(item => <TrackRow key={item[0]} track={item} light={false} onRowClick={() => setActivePlaylist(item[0])} onPlay={() => selectTrack(['Blue Hour', 'KIMDA'])} />)}</section>
+        <section className="playlist-section"><div className="playlist-heading"><h2>내 플레이리스트</h2><button onClick={() => setCreateSheetOpen(true)}>+ 만들기</button></div>{playlists.map(item => <TrackRow key={item[0]} track={item} light={false} onRowClick={() => setActivePlaylist(item[0])} onDelete={() => deletePlaylist(item[0])} onPlay={() => selectTrack(['Blue Hour', 'KIMDA'])} />)}</section>
       </> : tab === '탐색' ? <>
         <label className="search-field"><input value={query} onChange={event => setQuery(event.target.value)} placeholder="검색" aria-label="음악 검색" /></label>
         <section className="search-results" aria-live="polite">{searchResults.slice(0, 2).map(item => <TrackRow key={item[0]} track={item} light={false} onPlay={() => selectTrack(item)} />)}{searchResults.length === 0 && <p className="no-results">검색 결과가 없어요.</p>}</section>
