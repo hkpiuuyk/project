@@ -6,6 +6,38 @@ export const DIARY_STORAGE_KEY = 'music-diary-entries'
 export const PLAYLIST_STORAGE_KEY_V2 = 'music-diary-playlists-v2'
 export const DIARY_STORAGE_KEY_V2 = 'music-diary-entries-v2'
 export const TRACKS_STORAGE_KEY = 'music-diary-all-tracks'
+const AUDIO_DB_NAME = 'music-diary-audio'
+const AUDIO_STORE_NAME = 'tracks'
+
+function openAudioDatabase() {
+  return new Promise<IDBDatabase>((resolve, reject) => {
+    const request = indexedDB.open(AUDIO_DB_NAME, 1)
+    request.onupgradeneeded = () => request.result.createObjectStore(AUDIO_STORE_NAME)
+    request.onsuccess = () => resolve(request.result)
+    request.onerror = () => reject(request.error)
+  })
+}
+
+export async function saveTrackAudio(id: string, file: Blob) {
+  const database = await openAudioDatabase()
+  await new Promise<void>((resolve, reject) => {
+    const request = database.transaction(AUDIO_STORE_NAME, 'readwrite').objectStore(AUDIO_STORE_NAME).put(file, id)
+    request.onsuccess = () => resolve()
+    request.onerror = () => reject(request.error)
+  })
+  database.close()
+}
+
+export async function loadTrackAudio(id: string) {
+  const database = await openAudioDatabase()
+  const file = await new Promise<Blob | undefined>((resolve, reject) => {
+    const request = database.transaction(AUDIO_STORE_NAME, 'readonly').objectStore(AUDIO_STORE_NAME).get(id)
+    request.onsuccess = () => resolve(request.result as Blob | undefined)
+    request.onerror = () => reject(request.error)
+  })
+  database.close()
+  return file
+}
 
 export const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null && !Array.isArray(value)
 
@@ -18,7 +50,7 @@ export const isDiaryEntry = (value: unknown): value is DiaryEntry => isRecord(va
 export function loadTracks(): Track[] {
   try {
     const saved = localStorage.getItem(TRACKS_STORAGE_KEY)
-    return saved ? (JSON.parse(saved) as Track[]).filter(item => Boolean(item.audioUrl)) : []
+    return saved ? JSON.parse(saved) as Track[] : []
   } catch {
     return []
   }

@@ -5,6 +5,7 @@ import orderIcon from '../assets/figma/order.svg'
 import { LibrarySheets, type UploadPreview } from '../components/LibrarySheets'
 import { TrackRow } from '../components/TrackRow'
 import { parseAudioMetadata } from '../lib/audioMetadata'
+import { saveTrackAudio } from '../lib/storage'
 import type { Playlist, Track } from '../types'
 
 type LibraryScreenProps = {
@@ -73,10 +74,12 @@ export function LibraryScreen({ visible, allSearchTracks, setAllSearchTracks, pl
     if (uploadFileInputRef.current) uploadFileInputRef.current.value = ''
   }
 
-  const confirmUpload = () => {
+  const confirmUpload = async () => {
     if (!uploadPreview) return
+    const id = crypto.randomUUID()
+    await saveTrackAudio(id, uploadPreview.file)
     const newTrack: Track = {
-      id: crypto.randomUUID(),
+      id,
       title: uploadPreview.title,
       artist: uploadPreview.artist,
       coverUrl: uploadPreview.coverUrl,

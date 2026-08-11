@@ -1,4 +1,4 @@
-import { useState, type CSSProperties } from 'react'
+import { useEffect, useState, type CSSProperties } from 'react'
 
 import backIcon from './assets/figma/back.svg'
 import './App.css'
@@ -6,7 +6,7 @@ import './styles/shared.css'
 import { tabs } from './data'
 import { usePersistentState } from './hooks/usePersistentState'
 import { usePlayer } from './hooks/usePlayer'
-import { loadDiaryEntries, loadPlaylists, loadTracks, saveDiaryEntries, savePlaylists, saveTracks } from './lib/storage'
+import { loadDiaryEntries, loadPlaylists, loadTrackAudio, loadTracks, saveDiaryEntries, savePlaylists, saveTracks } from './lib/storage'
 import { Player } from './components/Player'
 import { DiaryScreen } from './screens/DiaryScreen'
 import { HomeScreen } from './screens/HomeScreen'
@@ -25,6 +25,17 @@ function App() {
   const [diaryWriting, setDiaryWriting] = useState(false)
   const [myScreen, setMyScreen] = useState<'main' | 'diaries' | 'settings' | 'terms'>('main')
   const player = usePlayer(allSearchTracks)
+
+  useEffect(() => {
+    let active = true
+    Promise.all(allSearchTracks.map(async track => {
+      const audio = await loadTrackAudio(track.id)
+      return audio ? { ...track, audioUrl: URL.createObjectURL(audio) } : null
+    })).then(tracks => {
+      if (active) setAllSearchTracks(tracks.filter(Boolean) as typeof allSearchTracks)
+    })
+    return () => { active = false }
+  }, [])
 
   const openPlaylist = activePlaylistId ? playlists.find(playlist => playlist.id === activePlaylistId) : undefined
   const moodStyle = mood ? {
