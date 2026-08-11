@@ -16,9 +16,6 @@
 - **미니 플레이어 / 전체 플레이어**: 화면 하단에서 재생과 다음 곡을 조작하고, 위로
   스와이프하면 전체 화면으로 펼쳐집니다.
 
-> 현재 재생은 UI 시뮬레이션입니다. 실제 오디오 재생(`<audio>`)은 아직 연결되어 있지
-> 않습니다.
-
 ## 기술 스택
 
 - React 19 + TypeScript
@@ -35,8 +32,3 @@ npm run build    # 프로덕션 빌드 (tsc -b && vite build)
 npm run lint     # oxlint
 npm run preview  # 빌드 결과 미리보기
 ```
-
-## 알려진 이슈
-
-- [#1 플레이리스트 이름 중복되면 곡 목록이 덮어써짐](https://github.com/hkpiuuyk/project/issues/1)
-- [#2 플레이리스트 재생 버튼이 항상 같은 곡을 재생함](https://github.com/hkpiuuyk/project/issues/2)
