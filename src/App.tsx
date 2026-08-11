@@ -1,4 +1,4 @@
-import { useEffect, useState, type CSSProperties } from 'react'
+import { useEffect, useRef, useState, type CSSProperties } from 'react'
 
 import backIcon from './assets/figma/back.svg'
 import './App.css'
@@ -19,6 +19,7 @@ function App() {
   const [mood, setMood] = useState<Mood | null>(null)
   const [tab, setTab] = useState('홈')
   const [allSearchTracks, setAllSearchTracks] = usePersistentState(loadTracks, saveTracks)
+  const initialTracksRef = useRef(allSearchTracks)
   const [playlists, setPlaylists] = usePersistentState(loadPlaylists, savePlaylists)
   const [diaryEntries, setDiaryEntries] = usePersistentState(loadDiaryEntries, saveDiaryEntries)
   const [activePlaylistId, setActivePlaylistId] = useState<string | null>(null)
@@ -28,14 +29,14 @@ function App() {
 
   useEffect(() => {
     let active = true
-    Promise.all(allSearchTracks.map(async track => {
+    Promise.all(initialTracksRef.current.map(async track => {
       const audio = await loadTrackAudio(track.id)
       return audio ? { ...track, audioUrl: URL.createObjectURL(audio) } : null
     })).then(tracks => {
       if (active) setAllSearchTracks(tracks.filter(Boolean) as typeof allSearchTracks)
     })
     return () => { active = false }
-  }, [])
+  }, [setAllSearchTracks])
 
   const openPlaylist = activePlaylistId ? playlists.find(playlist => playlist.id === activePlaylistId) : undefined
   const moodStyle = mood ? {
@@ -54,7 +55,7 @@ function App() {
           <span className="mood-orb orb-3" />
         </div>
       </div>
-      <section className={activePlaylistId ? 'content playlist-detail-content' : tab === '탐색' || tab === '라이브러리' || tab === '일기' || tab === '마이' ? 'content search-content' : 'content'} aria-label={`${tab} 화면`}>
+      <section key={`${activePlaylistId ?? myScreen}:${diaryWriting}:${tab}`} className={activePlaylistId ? 'content playlist-detail-content screen-transition' : tab === '탐색' || tab === '라이브러리' || tab === '일기' || tab === '마이' ? 'content search-content screen-transition' : 'content screen-transition'} aria-label={`${tab} 화면`}>
         <LibraryScreen visible={Boolean(activePlaylistId) || (baseScreenVisible && tab === '라이브러리')} allSearchTracks={allSearchTracks} setAllSearchTracks={setAllSearchTracks} playlists={playlists} setPlaylists={setPlaylists} activePlaylistId={activePlaylistId} setActivePlaylistId={setActivePlaylistId} setQueue={player.setQueue} selectTrack={player.selectTrack} playQueue={player.playQueue} />
         <DiaryScreen visible={!activePlaylistId && (diaryWriting || (baseScreenVisible && tab === '일기'))} diaryWriting={diaryWriting} setDiaryWriting={setDiaryWriting} diaryEntries={diaryEntries} setDiaryEntries={setDiaryEntries} track={player.track} setQueue={player.setQueue} selectTrack={player.selectTrack} />
         <MyScreen visible={!activePlaylistId && !diaryWriting && (myScreen !== 'main' || (baseScreenVisible && tab === '마이'))} myScreen={myScreen} setMyScreen={setMyScreen} autoplay={player.autoplay} setAutoplay={player.setAutoplay} playlists={playlists} diaryEntries={diaryEntries} setQueue={player.setQueue} selectTrack={player.selectTrack} />
