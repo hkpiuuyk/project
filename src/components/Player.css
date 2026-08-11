@@ -10,6 +10,8 @@
 .player-overlay.player-closing { animation: overlay-out .22s ease-out forwards; }
 .player-sheet { width: min(100%, 360px); min-height: 620px; padding: 32px 30px 40px; background: #fff; position: relative; border-radius: 18px 18px 0 0; text-align: center; touch-action: pan-y; animation: sheet-in .2s ease-out; }
 .player-sheet.player-sheet-closing { animation: sheet-out .22s ease-in forwards; }
+.player-back-button { position: absolute; top: 18px; left: 16px; width: 36px; height: 36px; display: grid; place-items: center; padding: 6px; border: 0; border-radius: 50%; background: transparent; }
+.player-back-button img { display: block; width: 24px; height: 24px; }
 .player-sheet-handle { width: 36px; height: 4px; margin: 0 auto 12px; border-radius: 2px; background: #d9d9d9; }
 .sheet-artwork { width: 300px; max-width: 100%; aspect-ratio: 1; margin: 12px auto 24px; border-radius: 12px; background: #d9d9d9; }
 .player-sheet h2 { font-size: 21px; }
