@@ -1,4 +1,5 @@
 import diaryPlayIcon from '../assets/figma/diary-play.svg'
+import './DiaryCard.css'
 
 import type { DiaryEntry } from '../types'
 

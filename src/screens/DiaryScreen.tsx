@@ -1,4 +1,5 @@
 import { useState, type Dispatch, type SetStateAction } from 'react'
+import './DiaryScreen.css'
 
 import { moods } from '../data'
 import { DiaryCard } from '../components/DiaryCard'

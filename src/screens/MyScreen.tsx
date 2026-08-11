@@ -1,4 +1,5 @@
 import type { Dispatch, SetStateAction } from 'react'
+import './MyScreen.css'
 
 import { DiaryCard } from '../components/DiaryCard'
 import type { DiaryEntry, Playlist, Track } from '../types'

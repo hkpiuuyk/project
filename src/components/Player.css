@@ -1,0 +1,24 @@
+.mini-player { min-height: 56px; flex: 0 0 56px; background: #fff; padding: 8px; display: flex; align-items: center; gap: 8px; text-align: left; }
+.mini-player-main { min-width: 0; flex: 1; border: 0; background: transparent; padding: 0; display: flex; align-items: center; gap: 12px; text-align: left; }
+.artwork.mini-art { width: 40px; height: 40px; flex-basis: 40px; }
+.mini-copy { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.mini-copy strong { font-size: 14px; font-weight: 500; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mini-copy span { color: #8a7a6d; font-size: 12px; line-height: 1.2; }
+.mini-control { width: 32px; height: 32px; flex: 0 0 32px; display: grid; place-items: center; padding: 4px; border: 0; border-radius: 50%; background: transparent; }
+.mini-control img { display: block; width: 24px; height: 24px; }
+.player-overlay { position: fixed; inset: 0; z-index: 10; background: rgb(28 32 36 / .28); display: flex; align-items: flex-end; justify-content: center; }
+.player-overlay.player-closing { animation: overlay-out .22s ease-out forwards; }
+.player-sheet { width: min(100%, 360px); min-height: 620px; padding: 32px 30px 40px; background: #fff; position: relative; border-radius: 18px 18px 0 0; text-align: center; touch-action: pan-y; animation: sheet-in .2s ease-out; }
+.player-sheet.player-sheet-closing { animation: sheet-out .22s ease-in forwards; }
+.player-sheet-handle { width: 36px; height: 4px; margin: 0 auto 12px; border-radius: 2px; background: #d9d9d9; }
+.sheet-artwork { width: 300px; max-width: 100%; aspect-ratio: 1; margin: 12px auto 24px; border-radius: 12px; background: #d9d9d9; }
+.player-sheet h2 { font-size: 21px; }
+.player-sheet p { color: #8a7a6d; margin: 6px 0 30px; font-size: 14px; }
+.player-sheet input { width: 100%; accent-color: #1c2024; }
+.time-row { display: flex; justify-content: space-between; color: #8a7a6d; font-size: 12px; }
+.sheet-controls { display: flex; align-items: center; justify-content: center; gap: 36px; margin-top: 26px; }
+.sheet-controls button { min-width: 44px; min-height: 44px; border: 0; background: none; color: #1c2024; font-size: 24px; }
+.sheet-controls .sheet-play { display: grid; place-items: center; border-radius: 50%; background: #f5f5f5; }
+.sheet-play img { width: 24px; height: 24px; }
+@keyframes sheet-out { from { transform: translateY(0); } to { transform: translateY(100%); } }
+@keyframes overlay-out { from { background: rgb(28 32 36 / .28); } to { background: rgb(28 32 36 / 0); } }

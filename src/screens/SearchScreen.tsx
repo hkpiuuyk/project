@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import './SearchScreen.css'
 
 import { TrackRow } from '../components/TrackRow'
 import type { Track } from '../types'

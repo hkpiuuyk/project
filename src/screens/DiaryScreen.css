@@ -1,0 +1,11 @@
+.diary-form { display: flex; flex: 1; flex-direction: column; gap: 24px; padding-top: 4px; }
+.diary-date { color: #8a7a6d; font-size: 13px; font-weight: 500; }
+.diary-form-section { display: flex; flex-direction: column; gap: 10px; }
+.diary-mood-list { display: flex; flex-wrap: wrap; gap: 8px; }
+.diary-mood { width: 68px; height: 40px; border: 0; border-radius: 10px; background: #f5f5f5; color: #1c2024; font-size: 13px; font-weight: 500; }
+.diary-mood.selected { background: #1c2024; color: #fff; font-weight: 700; }
+.diary-textarea { height: 148px; padding: 12px 14px; border-radius: 10px; background: #f5f5f5; display: flex; flex-direction: column; }
+.diary-textarea textarea { flex: 1; width: 100%; resize: none; border: 0; outline: 0; background: transparent; color: #1c2024; font: 400 15px/1.45 'Noto Sans KR', sans-serif; }
+.diary-textarea textarea::placeholder { color: #8a7a6d; }
+.diary-textarea span { align-self: flex-end; color: #8a7a6d; font-size: 12px; }
+.diary-save-button { margin-top: auto; flex: 0 0 48px; }

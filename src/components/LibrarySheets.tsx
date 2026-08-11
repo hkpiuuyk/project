@@ -1,5 +1,6 @@
 import type { ChangeEvent, RefObject } from 'react'
 import { createPortal } from 'react-dom'
+import './LibrarySheets.css'
 
 import checkboxCircleIcon from '../assets/figma/checkbox-circle.svg'
 import closeIcon from '../assets/figma/close.svg'

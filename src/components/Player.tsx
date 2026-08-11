@@ -1,4 +1,5 @@
 import type { ChangeEvent } from 'react'
+import './Player.css'
 
 import pauseIcon from '../assets/figma/pause.svg'
 import playIcon from '../assets/figma/play.svg'

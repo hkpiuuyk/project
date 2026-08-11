@@ -1,4 +1,5 @@
 import type { Dispatch, SetStateAction } from 'react'
+import './HomeScreen.css'
 
 import { moods } from '../data'
 import { TrackRow } from '../components/TrackRow'

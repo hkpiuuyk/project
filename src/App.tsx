@@ -2,6 +2,7 @@ import { useState, type CSSProperties } from 'react'
 
 import backIcon from './assets/figma/back.svg'
 import './App.css'
+import './styles/shared.css'
 import { tabs } from './data'
 import { usePersistentState } from './hooks/usePersistentState'
 import { usePlayer } from './hooks/usePlayer'
