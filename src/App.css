@@ -39,8 +39,11 @@ button { font: inherit; }
 @keyframes mood-orb-drift-3 { from { transform: translate3d(-18%, -15%, 0) scale(1); } to { transform: translate3d(22%, 20%, 0) scale(1.2); } }
 @media (prefers-reduced-motion: reduce) {
   .mood-orb { animation: none; will-change: auto; }
+  .screen-transition { animation: none; }
 }
 .content { position: relative; z-index: 1; flex: 1; min-height: 0; padding: 16px; display: flex; flex-direction: column; gap: 24px; overflow-y: auto; }
+.screen-transition { animation: screen-slide-in .28s cubic-bezier(.22, .8, .24, 1) both; }
+@keyframes screen-slide-in { from { opacity: .35; transform: translate3d(28px, 0, 0); } to { opacity: 1; transform: translate3d(0, 0, 0); } }
 h2 { margin: 0; font-size: 17px; line-height: 1.35; letter-spacing: -0.7px; font-weight: 600; }
 .search-content { padding-top: 12px; gap: 20px; }
 .playlist-detail-content { padding-top: 12px; gap: 8px; }
