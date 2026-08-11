@@ -39,12 +39,16 @@ export function LibraryScreen({ visible, allSearchTracks, setAllSearchTracks, pl
   const handleFileUpload = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
+    const previousCoverUrl = uploadPreview?.coverUrl
     uploadTokenRef.current += 1
     const uploadToken = uploadTokenRef.current
 
     // 1. 메타데이터 파싱 시도
     const metadata = await parseAudioMetadata(file)
-    if (uploadToken !== uploadTokenRef.current) return
+    if (uploadToken !== uploadTokenRef.current) {
+      if (metadata.coverUrl?.startsWith('blob:')) URL.revokeObjectURL(metadata.coverUrl)
+      return
+    }
 
     // 2. 파일명에서 확장자 및 인터넷 웹사이트 광고 문구(.com, .net 등) 정제
     let rawName = file.name
@@ -64,33 +68,36 @@ export function LibraryScreen({ visible, allSearchTracks, setAllSearchTracks, pl
     const fallbackCover = `https://picsum.photos/400/400?random=${Date.now()}`
     const finalCover = metadata.coverUrl || fallbackCover
 
+    if (previousCoverUrl?.startsWith('blob:')) URL.revokeObjectURL(previousCoverUrl)
     setUploadPreview({ file, title: finalTitle, artist: finalArtist, coverUrl: finalCover })
   }
 
   const closeUpload = () => {
     uploadTokenRef.current += 1
     setUploadSheetOpen(false)
+    if (uploadPreview?.coverUrl?.startsWith('blob:')) URL.revokeObjectURL(uploadPreview.coverUrl)
     setUploadPreview(null)
     if (uploadFileInputRef.current) uploadFileInputRef.current.value = ''
   }
 
   const confirmUpload = async () => {
     if (!uploadPreview) return
+    const { file, title, artist, coverUrl } = uploadPreview
+    setUploadPreview(null)
+    uploadTokenRef.current += 1
     const id = crypto.randomUUID()
-    await saveTrackAudio(id, uploadPreview.file)
+    await saveTrackAudio(id, file)
     const newTrack: Track = {
       id,
-      title: uploadPreview.title,
-      artist: uploadPreview.artist,
-      coverUrl: uploadPreview.coverUrl,
-      audioUrl: URL.createObjectURL(uploadPreview.file)
+      title,
+      artist,
+      coverUrl,
+      audioUrl: URL.createObjectURL(file)
     }
     setAllSearchTracks(prev => [newTrack, ...prev])
     setQueue([newTrack.id])
     selectTrack(newTrack)
-    uploadTokenRef.current += 1
     setUploadSheetOpen(false)
-    setUploadPreview(null)
     if (uploadFileInputRef.current) uploadFileInputRef.current.value = ''
   }
 

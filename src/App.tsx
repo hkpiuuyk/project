@@ -1,4 +1,4 @@
-import { useEffect, useState, type CSSProperties } from 'react'
+import { useEffect, useRef, useState, type CSSProperties } from 'react'
 
 import backIcon from './assets/figma/back.svg'
 import './App.css'
@@ -24,18 +24,45 @@ function App() {
   const [activePlaylistId, setActivePlaylistId] = useState<string | null>(null)
   const [diaryWriting, setDiaryWriting] = useState(false)
   const [myScreen, setMyScreen] = useState<'main' | 'diaries' | 'settings' | 'terms'>('main')
+  const initialSearchTracks = useRef(allSearchTracks)
   const player = usePlayer(allSearchTracks)
 
   useEffect(() => {
     let active = true
-    Promise.all(allSearchTracks.map(async track => {
-      const audio = await loadTrackAudio(track.id)
-      return audio ? { ...track, audioUrl: URL.createObjectURL(audio) } : null
-    })).then(tracks => {
-      if (active) setAllSearchTracks(tracks.filter(Boolean) as typeof allSearchTracks)
+    const createdObjectUrls: string[] = []
+
+    const revokeCreatedObjectUrls = () => {
+      createdObjectUrls.forEach(url => URL.revokeObjectURL(url))
+      createdObjectUrls.length = 0
+    }
+
+    void Promise.all(initialSearchTracks.current.map(async track => {
+      try {
+        const audio = await loadTrackAudio(track.id)
+        if (!audio || !active) return null
+        const audioUrl = URL.createObjectURL(audio)
+        createdObjectUrls.push(audioUrl)
+        return { id: track.id, audioUrl }
+      } catch (error) {
+        console.error(`Failed to load audio for track ${track.id}`, error)
+        return null
+      }
+    })).then(hydratedTracks => {
+      if (!active) return
+      const audioUrlsByTrackId = new Map(hydratedTracks.filter(track => track !== null).map(track => [track.id, track.audioUrl]))
+      setAllSearchTracks(current => current.map(track => {
+        const audioUrl = audioUrlsByTrackId.get(track.id)
+        return audioUrl ? { ...track, audioUrl } : track
+      }))
+    }).catch(error => {
+      if (active) console.error('Failed to hydrate track audio', error)
     })
-    return () => { active = false }
-  }, [])
+
+    return () => {
+      active = false
+      revokeCreatedObjectUrls()
+    }
+  }, [setAllSearchTracks])
 
   const openPlaylist = activePlaylistId ? playlists.find(playlist => playlist.id === activePlaylistId) : undefined
   const moodStyle = mood ? {
