@@ -1,16 +1,46 @@
 .library-filters { display: flex; gap: 8px; height: 36px; }
-.library-filter { width: 80px; height: 36px; border: 0; border-radius: 8px; background: #f5f5f5; color: #1c2024; font-size: 14px; font-weight: 500; }
-.library-filter.active-filter { background: #1c2024; color: #fff; }
+.library-filter { width: 80px; height: 36px; border: 0; border-radius: 8px; background: #f5f5f5; color: #1c2024; font-size: 14px; font-weight: 500; transition: background-color var(--ui-duration) ease-out; }
+@media (hover: hover) and (pointer: fine) {
+  .library-filter:not(.active-filter):hover { background-color: color-mix(in oklab, #f5f5f5, black 6%); }
+}
+.library-filter:not(.active-filter):active { background-color: color-mix(in oklab, #f5f5f5, black 10%); }
+.library-filter:not(.active-filter):focus-visible { outline: 2px solid var(--ui-focus-ring); outline-offset: 2px; }
+.library-filter.active-filter { background: #1c2024; color: #fff; transition: background-color var(--ui-duration) ease-out, transform var(--ui-duration) var(--ui-ease); }
+@media (hover: hover) and (pointer: fine) {
+  .library-filter.active-filter:hover { background-color: color-mix(in oklab, #1c2024, white 10%); }
+}
+.library-filter.active-filter:active { background-color: color-mix(in oklab, #1c2024, black 12%); }
+.library-filter.active-filter:focus-visible { outline: 2px solid var(--ui-focus-ring); outline-offset: 2px; }
 .library-tracks, .playlist-section { width: 100%; display: flex; flex-direction: column; gap: 8px; }
 .library-tracks .track-row, .playlist-section .track-row { margin: 0; }
 .playlist-heading { height: 32px; display: flex; align-items: center; justify-content: space-between; }
-.playlist-heading button { border: 0; background: none; color: #8a7a6d; padding: 0; font-size: 14px; font-weight: 500; }
+.playlist-heading button { border: 0; border-radius: 8px; background: none; color: #8a7a6d; padding: 0; font-size: 14px; font-weight: 500; transition: background-color var(--ui-duration) ease-out; }
+@media (hover: hover) and (pointer: fine) {
+  .playlist-heading button:hover { background-color: rgb(28 32 36 / .06); }
+}
+.playlist-heading button:active { background-color: rgb(28 32 36 / .12); }
+.playlist-heading button:focus-visible { outline: 2px solid var(--ui-focus-ring); outline-offset: 2px; }
 .detail-track-list { width: 100%; display: flex; flex-direction: column; gap: 8px; }
 .detail-track-row { width: 100%; min-height: 108px; padding: 16px 0; display: flex; align-items: center; gap: 12px; }
 .detail-track-row.dragging { opacity: .45; }
 .song-actions { margin-left: auto; display: flex; align-items: center; gap: 8px; }
-.order-handle { width: 32px; height: 40px; flex: 0 0 32px; padding: 8px 4px; border: 0; background: transparent; cursor: grab; touch-action: none; }
+.order-handle { width: 32px; height: 40px; flex: 0 0 32px; padding: 8px 4px; border: 0; border-radius: 8px; background: transparent; cursor: grab; touch-action: none; transition: background-color var(--ui-duration) ease-out; }
+@media (hover: hover) and (pointer: fine) {
+  .order-handle:hover { background-color: rgb(28 32 36 / .06); }
+}
+.order-handle:active { background-color: rgb(28 32 36 / .12); }
+.order-handle:focus-visible { outline: 2px solid var(--ui-focus-ring); outline-offset: 2px; }
 .order-handle:active { cursor: grabbing; }
 .order-handle img { display: block; width: 24px; height: 24px; }
-.song-delete-button { height: 32px; padding: 0 7px; border: 0; border-radius: 7px; background: #f5f5f5; color: #8a7a6d; font-size: 12px; font-weight: 500; }
-.add-song-button { width: 100%; height: 48px; margin-top: 8px; border: 0; border-radius: 10px; background: #f5f5f5; color: #1c2024; font-size: 15px; font-weight: 500; }
+.song-delete-button { height: 32px; padding: 0 7px; border: 0; border-radius: 7px; background: #f5f5f5; color: #8a7a6d; font-size: 12px; font-weight: 500; transition: background-color var(--ui-duration) ease-out; }
+@media (hover: hover) and (pointer: fine) {
+  .song-delete-button:hover { background-color: color-mix(in oklab, #f5f5f5, black 6%); }
+}
+.song-delete-button:active { background-color: color-mix(in oklab, #f5f5f5, black 10%); }
+.song-delete-button:focus-visible { outline: 2px solid var(--ui-focus-ring); outline-offset: 2px; }
+.add-song-button { width: 100%; height: 48px; margin-top: 8px; border: 0; border-radius: 10px; background: #f5f5f5; color: #1c2024; font-size: 15px; font-weight: 500; transition: background-color var(--ui-duration) ease-out; }
+@media (hover: hover) and (pointer: fine) {
+  .add-song-button:hover { background-color: color-mix(in oklab, #f5f5f5, black 6%); }
+}
+.add-song-button:active { background-color: color-mix(in oklab, #f5f5f5, black 10%); }
+.add-song-button:focus-visible { outline: 2px solid var(--ui-focus-ring); outline-offset: 2px; }
