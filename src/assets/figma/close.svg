@@ -1,3 +1,6 @@
 <svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="44" height="44" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="close">
 <circle id="&#235;&#139;&#171;&#234;&#184;&#176; 44&#195;&#151;44" cx="22" cy="22" r="22" fill="#F5F5F5"/>
+<path id="Vector" d="M15 15L29 29M29 15L15 29" stroke="#1C2024" stroke-width="2" stroke-linecap="round"/>
+</g>
 </svg>
