@@ -8,11 +8,16 @@ export const DIARY_STORAGE_KEY_V2 = 'music-diary-entries-v2'
 export const TRACKS_STORAGE_KEY = 'music-diary-all-tracks'
 const AUDIO_DB_NAME = 'music-diary-audio'
 const AUDIO_STORE_NAME = 'tracks'
+const COVER_STORE_NAME = 'covers'
 
 function openAudioDatabase() {
   return new Promise<IDBDatabase>((resolve, reject) => {
-    const request = indexedDB.open(AUDIO_DB_NAME, 1)
-    request.onupgradeneeded = () => request.result.createObjectStore(AUDIO_STORE_NAME)
+    const request = indexedDB.open(AUDIO_DB_NAME, 2)
+    request.onupgradeneeded = () => {
+      const db = request.result
+      if (!db.objectStoreNames.contains(AUDIO_STORE_NAME)) db.createObjectStore(AUDIO_STORE_NAME)
+      if (!db.objectStoreNames.contains(COVER_STORE_NAME)) db.createObjectStore(COVER_STORE_NAME)
+    }
     request.onsuccess = () => resolve(request.result)
     request.onerror = () => reject(request.error)
   })
@@ -39,6 +44,27 @@ export async function loadTrackAudio(id: string) {
   return file
 }
 
+export async function saveTrackCover(id: string, blob: Blob) {
+  const database = await openAudioDatabase()
+  await new Promise<void>((resolve, reject) => {
+    const request = database.transaction(COVER_STORE_NAME, 'readwrite').objectStore(COVER_STORE_NAME).put(blob, id)
+    request.onsuccess = () => resolve()
+    request.onerror = () => reject(request.error)
+  })
+  database.close()
+}
+
+export async function loadTrackCover(id: string) {
+  const database = await openAudioDatabase()
+  const blob = await new Promise<Blob | undefined>((resolve, reject) => {
+    const request = database.transaction(COVER_STORE_NAME, 'readonly').objectStore(COVER_STORE_NAME).get(id)
+    request.onsuccess = () => resolve(request.result as Blob | undefined)
+    request.onerror = () => reject(request.error)
+  })
+  database.close()
+  return blob
+}
+
 export const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null && !Array.isArray(value)
 
 export const isPlaylist = (value: unknown): value is Playlist => isRecord(value) && typeof value.id === 'string' && typeof value.name === 'string' && Array.isArray(value.trackIds) && value.trackIds.every(item => typeof item === 'string')
@@ -60,6 +86,7 @@ export function saveTracks(tracks: Track[]) {
   const cleanTracks = tracks.map(item => {
     const cleanTrack = { ...item }
     delete cleanTrack.audioUrl
+    if (cleanTrack.coverUrl?.startsWith('blob:')) delete cleanTrack.coverUrl
     return cleanTrack
   })
   localStorage.setItem(TRACKS_STORAGE_KEY, JSON.stringify(cleanTracks))

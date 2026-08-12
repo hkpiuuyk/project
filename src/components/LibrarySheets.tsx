@@ -8,7 +8,7 @@ import uploadIcon from '../assets/figma/upload.svg'
 
 import type { Track } from '../types'
 
-export type UploadPreview = { id: string; file: File; title: string; artist: string; coverUrl?: string }
+export type UploadPreview = { id: string; file: File; title: string; artist: string; coverUrl?: string; coverBlob?: Blob }
 
 type LibrarySheetsProps = {
   createSheetOpen: boolean

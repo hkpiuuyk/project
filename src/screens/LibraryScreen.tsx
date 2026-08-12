@@ -5,7 +5,7 @@ import orderIcon from '../assets/figma/order.svg'
 import { LibrarySheets, type UploadPreview } from '../components/LibrarySheets'
 import { TrackRow } from '../components/TrackRow'
 import { parseAudioMetadata } from '../lib/audioMetadata'
-import { saveTrackAudio } from '../lib/storage'
+import { saveTrackAudio, saveTrackCover } from '../lib/storage'
 import type { Playlist, Track } from '../types'
 
 type LibraryScreenProps = {
@@ -66,7 +66,7 @@ export function LibraryScreen({ visible, allSearchTracks, setAllSearchTracks, pl
       const fallbackCover = `https://picsum.photos/400/400?random=${Date.now()}-${index}`
       const finalCover = metadata.coverUrl || fallbackCover
 
-      return { id: crypto.randomUUID(), file, title: finalTitle, artist: finalArtist, coverUrl: finalCover }
+      return { id: crypto.randomUUID(), file, title: finalTitle, artist: finalArtist, coverUrl: finalCover, coverBlob: metadata.coverBlob }
     }))
 
     if (uploadToken !== uploadTokenRef.current) {
@@ -95,8 +95,9 @@ export function LibraryScreen({ visible, allSearchTracks, setAllSearchTracks, pl
   const confirmUpload = async () => {
     if (uploadPreviews.length === 0) return
     uploadTokenRef.current += 1
-    const newTracks = await Promise.all(uploadPreviews.map(async ({ id, file, title, artist, coverUrl }) => {
+    const newTracks = await Promise.all(uploadPreviews.map(async ({ id, file, title, artist, coverUrl, coverBlob }) => {
       await saveTrackAudio(id, file)
+      if (coverBlob) await saveTrackCover(id, coverBlob)
       return { id, title, artist, coverUrl, audioUrl: URL.createObjectURL(file) }
     }))
     setAllSearchTracks(prev => [...newTracks, ...prev])

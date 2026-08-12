@@ -6,7 +6,7 @@ import './styles/shared.css'
 import { tabs } from './data'
 import { usePersistentState } from './hooks/usePersistentState'
 import { usePlayer } from './hooks/usePlayer'
-import { loadDiaryEntries, loadPlaylists, loadTrackAudio, loadTracks, saveDiaryEntries, savePlaylists, saveTracks } from './lib/storage'
+import { loadDiaryEntries, loadPlaylists, loadTrackAudio, loadTrackCover, loadTracks, saveDiaryEntries, savePlaylists, saveTracks } from './lib/storage'
 import { Player } from './components/Player'
 import { DiaryScreen } from './screens/DiaryScreen'
 import { HomeScreen } from './screens/HomeScreen'
@@ -50,24 +50,34 @@ function App() {
 
     void Promise.all(initialSearchTracks.current.map(async track => {
       try {
-        const audio = await loadTrackAudio(track.id)
-        if (!audio || !active) return null
-        const audioUrl = URL.createObjectURL(audio)
-        createdObjectUrls.push(audioUrl)
-        return { id: track.id, audioUrl }
+        const [audio, cover] = await Promise.all([loadTrackAudio(track.id), loadTrackCover(track.id)])
+        if (!active) return null
+        const patch: { id: string; audioUrl?: string; coverUrl?: string } = { id: track.id }
+        if (audio) {
+          const audioUrl = URL.createObjectURL(audio)
+          createdObjectUrls.push(audioUrl)
+          patch.audioUrl = audioUrl
+        }
+        if (cover) {
+          const coverUrl = URL.createObjectURL(cover)
+          createdObjectUrls.push(coverUrl)
+          patch.coverUrl = coverUrl
+        }
+        return patch
       } catch (error) {
-        console.error(`Failed to load audio for track ${track.id}`, error)
+        console.error(`Failed to load media for track ${track.id}`, error)
         return null
       }
     })).then(hydratedTracks => {
       if (!active) return
-      const audioUrlsByTrackId = new Map(hydratedTracks.filter(track => track !== null).map(track => [track.id, track.audioUrl]))
+      const patchesByTrackId = new Map(hydratedTracks.filter((t): t is NonNullable<typeof t> => t !== null).map(t => [t.id, t]))
       setAllSearchTracks(current => current.map(track => {
-        const audioUrl = audioUrlsByTrackId.get(track.id)
-        return audioUrl ? { ...track, audioUrl } : track
+        const patch = patchesByTrackId.get(track.id)
+        if (!patch) return track
+        return { ...track, ...(patch.audioUrl ? { audioUrl: patch.audioUrl } : {}), ...(patch.coverUrl ? { coverUrl: patch.coverUrl } : {}) }
       }))
     }).catch(error => {
-      if (active) console.error('Failed to hydrate track audio', error)
+      if (active) console.error('Failed to hydrate track media', error)
     })
 
     return () => {

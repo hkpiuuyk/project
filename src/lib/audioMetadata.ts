@@ -1,4 +1,4 @@
-export async function parseAudioMetadata(file: File): Promise<{ title?: string; artist?: string; coverUrl?: string }> {
+export async function parseAudioMetadata(file: File): Promise<{ title?: string; artist?: string; coverUrl?: string; coverBlob?: Blob }> {
   return new Promise((resolve) => {
     const rawName = file.name.replace(/\.[^/.]+$/, '')
     let fallbackTitle = rawName
@@ -32,6 +32,7 @@ export async function parseAudioMetadata(file: File): Promise<{ title?: string; 
       let title: string | undefined
       let artist: string | undefined
       let coverUrl: string | undefined
+      let coverBlob: Blob | undefined
 
       // 인코딩 바이트 및 EUC-KR / UTF-8 / UTF-16 디코더
       const decodeFrameText = (bytes: Uint8Array): string => {
@@ -137,6 +138,7 @@ export async function parseAudioMetadata(file: File): Promise<{ title?: string; 
               const imgBuffer = frameData.subarray(p)
               const blob = new Blob([imgBuffer], { type: imageMimeType })
               coverUrl = URL.createObjectURL(blob)
+              coverBlob = blob
             }
           } catch { }
         }
@@ -144,7 +146,7 @@ export async function parseAudioMetadata(file: File): Promise<{ title?: string; 
         offset += headerLen + frameSize
       }
 
-      resolve({ title: title || fallbackTitle, artist: artist || fallbackArtist, coverUrl })
+      resolve({ title: title || fallbackTitle, artist: artist || fallbackArtist, coverUrl, coverBlob })
     }
 
     reader.onerror = () => resolve({ title: fallbackTitle, artist: fallbackArtist })
