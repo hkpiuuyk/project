@@ -11,6 +11,13 @@ const AUDIO_DB_NAME = 'music-diary-audio'
 const AUDIO_STORE_NAME = 'tracks'
 const COVER_STORE_NAME = 'covers'
 
+export function resetAllData() {
+  Object.keys(localStorage)
+    .filter(key => key.startsWith('music-diary-'))
+    .forEach(key => localStorage.removeItem(key))
+  indexedDB.deleteDatabase(AUDIO_DB_NAME)
+}
+
 function openAudioDatabase() {
   return new Promise<IDBDatabase>((resolve, reject) => {
     const request = indexedDB.open(AUDIO_DB_NAME, 2)

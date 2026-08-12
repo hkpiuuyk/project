@@ -1,7 +1,8 @@
-import type { Dispatch, SetStateAction } from 'react'
+import { useState, type Dispatch, type SetStateAction } from 'react'
 import './MyScreen.css'
 
 import { DiaryCard } from '../components/DiaryCard'
+import { resetAllData } from '../lib/storage'
 import type { DiaryEntry, Playlist, Track } from '../types'
 
 const credits = [
@@ -24,8 +25,13 @@ type MyScreenProps = {
 }
 
 export function MyScreen({ visible, myScreen, setMyScreen, autoplay, setAutoplay, playlists, diaryEntries, allSearchTracks, playQueue, setTab }: MyScreenProps) {
+  const [resetConfirmOpen, setResetConfirmOpen] = useState(false)
   const playDiaryEntry = (entry: DiaryEntry) => {
     playQueue([entry.track.id], 0)
+  }
+  const handleResetAllData = () => {
+    resetAllData()
+    window.location.reload()
   }
 
   if (!visible) return null
@@ -33,5 +39,8 @@ export function MyScreen({ visible, myScreen, setMyScreen, autoplay, setAutoplay
   if (myScreen === 'terms') return <section className="terms-content"><h2>이용약관</h2><p>이 앱은 기기 내부에만 데이터를 저장하며, 계정·서버·분석 스크립트를 사용하지 않습니다.</p><p>작성한 일기와 플레이리스트는 이 기기에서만 관리됩니다.</p></section>
   if (myScreen === 'credits') return <section className="terms-content credits-content"><h2>크레딧</h2><p>이 프로젝트는 팀 Clova가 만들었습니다.</p><ul className="credits-list">{credits.map(person => <li key={person.github}><span>{person.name}</span><a href={`https://github.com/${person.github}`} target="_blank" rel="noopener noreferrer">GitHub ↗</a></li>)}</ul></section>
   if (myScreen === 'diaries') return diaryEntries.length > 0 ? <section className="diary-list">{diaryEntries.map(entry => <DiaryCard key={entry.id} entry={entry} allSearchTracks={allSearchTracks} onPlay={playDiaryEntry} />)}</section> : <section className="diary-empty"><span className="diary-empty-mark" aria-hidden="true" /><h2>작성한 일기가 없어요</h2><p>일기를 쓰면 이곳에서 다시 볼 수 있어요.</p></section>
-  return <section className="my-page"><section className="my-summary"><span className="my-avatar" aria-hidden="true" /><div><h2>나의 음악 일기</h2><p>음악으로 기록한 나만의 하루</p></div></section><section className="my-stats"><button onClick={() => setTab('라이브러리')}><strong>{playlists.length}</strong><span>플레이리스트</span></button><button onClick={() => setMyScreen('diaries')}><strong>{diaryEntries.length}</strong><span>일기</span></button></section><section className="my-menu"><h2>설정</h2><button onClick={() => setMyScreen('settings')}><span>재생 설정</span><b>›</b></button><button onClick={() => setMyScreen('terms')}><span>이용약관</span><b>›</b></button><button onClick={() => setMyScreen('credits')}><span>크레딧</span><b>›</b></button></section></section>
+  return <>
+    <section className="my-page"><section className="my-summary"><span className="my-avatar" aria-hidden="true" /><div><h2>나의 음악 일기</h2><p>음악으로 기록한 나만의 하루</p></div></section><section className="my-stats"><button onClick={() => setTab('라이브러리')}><strong>{playlists.length}</strong><span>플레이리스트</span></button><button onClick={() => setMyScreen('diaries')}><strong>{diaryEntries.length}</strong><span>일기</span></button></section><section className="my-menu"><h2>설정</h2><button onClick={() => setMyScreen('settings')}><span>재생 설정</span><b>›</b></button><button onClick={() => setMyScreen('terms')}><span>이용약관</span><b>›</b></button><button onClick={() => setMyScreen('credits')}><span>크레딧</span><b>›</b></button><button onClick={() => setResetConfirmOpen(true)}><span>전체 데이터 초기화</span><b>›</b></button></section></section>
+    {resetConfirmOpen && <div className="create-overlay delete-overlay" onClick={() => setResetConfirmOpen(false)}><section className="delete-dialog" onClick={event => event.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="reset-title"><h2 id="reset-title">전체 데이터를 초기화할까요?</h2><p>저장된 곡, 플레이리스트, 일기가 모두 삭제되며 되돌릴 수 없어요.</p><div><button onClick={() => setResetConfirmOpen(false)}>취소</button><button className="confirm-delete" onClick={handleResetAllData}>초기화</button></div></section></div>}
+  </>
 }
