@@ -83,7 +83,6 @@ export function usePlayer(allSearchTracks: Track[]): PlayerState {
     setTrack(nextTrack)
     setPlaying(Boolean(nextTrack.audioUrl))
     setMiniPlayerVisible(true)
-    setPlayerOpen(true)
   }
 
   const minimizePlayer = () => {
@@ -98,6 +97,7 @@ export function usePlayer(allSearchTracks: Track[]): PlayerState {
     if (!startTrack) return
     setQueue(trackIds)
     selectTrack(startTrack)
+    setPlayerOpen(true)
   }
 
   const toggleShuffle = () => {

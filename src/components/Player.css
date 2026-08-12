@@ -18,7 +18,8 @@
 .mini-control img { display: block; width: 24px; height: 24px; }
 .player-overlay { position: fixed; inset: 0; z-index: 10; background: rgb(28 32 36 / .28); display: flex; align-items: flex-end; justify-content: center; }
 .player-overlay.player-closing { animation: overlay-out .22s ease-out forwards; }
-.player-sheet { width: min(100%, 360px); min-height: 620px; max-height: min(620px, 100dvh); padding: 32px 30px 40px; overflow-y: auto; background: #fff; position: relative; border-radius: 18px 18px 0 0; text-align: center; touch-action: pan-y; animation: sheet-in .2s ease-out; }
+.player-sheet { width: min(100%, 1024px); min-height: 620px; max-height: min(620px, 100dvh); padding: 32px 30px 40px; overflow-y: auto; scrollbar-width: none; -ms-overflow-style: none; background: #fff; position: relative; border-radius: 18px 18px 0 0; text-align: center; touch-action: pan-y; animation: sheet-in .2s ease-out; }
+.player-sheet::-webkit-scrollbar { display: none; }
 .player-sheet.player-sheet-closing { animation: sheet-out .22s ease-in forwards; }
 .player-back-button { position: absolute; top: 8px; left: 8px; width: 36px; height: 36px; display: grid; place-items: center; padding: 6px; border: 0; border-radius: 50%; background: transparent; transition: background-color var(--ui-duration) ease-out; }
 @media (hover: hover) and (pointer: fine) {

@@ -15,11 +15,10 @@ type DiaryScreenProps = {
   setDiaryEntries: Dispatch<SetStateAction<DiaryEntry[]>>
   track: Track
   allSearchTracks: Track[]
-  setQueue: Dispatch<SetStateAction<string[]>>
-  selectTrack: (track: Track) => void
+  playQueue: (trackIds: string[], startIndex: number, sourceLabel?: string) => void
 }
 
-export function DiaryScreen({ visible, diaryWriting, setDiaryWriting, diaryEntries, setDiaryEntries, track, allSearchTracks, setQueue, selectTrack }: DiaryScreenProps) {
+export function DiaryScreen({ visible, diaryWriting, setDiaryWriting, diaryEntries, setDiaryEntries, track, allSearchTracks, playQueue }: DiaryScreenProps) {
   const [diaryMood, setDiaryMood] = useState('차분함')
   const [diaryText, setDiaryText] = useState('')
   const [pickerOpen, setPickerOpen] = useState(false)
@@ -39,8 +38,7 @@ export function DiaryScreen({ visible, diaryWriting, setDiaryWriting, diaryEntri
   }
 
   const playDiaryEntry = (entry: DiaryEntry) => {
-    setQueue([entry.track.id])
-    selectTrack(entry.track)
+    playQueue([entry.track.id], 0)
   }
 
   if (!visible) return null
