@@ -1,4 +1,4 @@
-import type { DiaryEntry, PlayHistoryEntry, Playlist, Track } from '../types'
+import type { DiaryEntry, Mood, NowPlaying, PlayHistoryEntry, Playlist, Track } from '../types'
 
 const PLAYLIST_STORAGE_KEY = 'music-diary-playlists'
 const PLAYLIST_SONGS_STORAGE_KEY = 'music-diary-playlist-songs'
@@ -7,6 +7,8 @@ const PLAYLIST_STORAGE_KEY_V2 = 'music-diary-playlists-v2'
 const DIARY_STORAGE_KEY_V2 = 'music-diary-entries-v2'
 const TRACKS_STORAGE_KEY = 'music-diary-all-tracks'
 const PLAY_HISTORY_STORAGE_KEY = 'music-diary-play-history'
+const MOOD_STORAGE_KEY = 'music-diary-mood'
+const NOW_PLAYING_STORAGE_KEY = 'music-diary-now-playing'
 const AUDIO_DB_NAME = 'music-diary-audio'
 const AUDIO_STORE_NAME = 'tracks'
 const COVER_STORE_NAME = 'covers'
@@ -83,6 +85,44 @@ const isDiaryEntry = (value: unknown): value is DiaryEntry => isRecord(value) &&
 
 const isPlayHistoryEntry = (value: unknown): value is PlayHistoryEntry =>
   isRecord(value) && typeof value.trackId === 'string' && typeof value.playedAt === 'number'
+
+const isMood = (value: unknown): value is Mood =>
+  isRecord(value) && typeof value.name === 'string' && typeof value.start === 'string' && typeof value.middle === 'string' && typeof value.end === 'string' && typeof value.chip === 'string'
+
+export function loadMood(): Mood | null {
+  try {
+    const saved = localStorage.getItem(MOOD_STORAGE_KEY)
+    if (!saved) return null
+    const parsed: unknown = JSON.parse(saved)
+    return isMood(parsed) ? parsed : null
+  } catch {
+    return null
+  }
+}
+
+export function saveMood(mood: Mood | null) {
+  if (mood) localStorage.setItem(MOOD_STORAGE_KEY, JSON.stringify(mood))
+  else localStorage.removeItem(MOOD_STORAGE_KEY)
+}
+
+const isNowPlaying = (value: unknown): value is NowPlaying =>
+  isRecord(value) && typeof value.trackId === 'string' && Array.isArray(value.queue) && value.queue.every(id => typeof id === 'string') && (value.queueSourceLabel === null || typeof value.queueSourceLabel === 'string') && typeof value.currentTime === 'number'
+
+export function loadNowPlaying(): NowPlaying | null {
+  try {
+    const saved = localStorage.getItem(NOW_PLAYING_STORAGE_KEY)
+    if (!saved) return null
+    const parsed: unknown = JSON.parse(saved)
+    return isNowPlaying(parsed) ? parsed : null
+  } catch {
+    return null
+  }
+}
+
+export function saveNowPlaying(nowPlaying: NowPlaying | null) {
+  if (nowPlaying) localStorage.setItem(NOW_PLAYING_STORAGE_KEY, JSON.stringify(nowPlaying))
+  else localStorage.removeItem(NOW_PLAYING_STORAGE_KEY)
+}
 
 export function loadPlayHistory(): PlayHistoryEntry[] {
   try {

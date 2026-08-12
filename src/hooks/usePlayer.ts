@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type Dispatch, type SetStateAction, type SyntheticEvent } from 'react'
 
+import { loadNowPlaying, saveNowPlaying } from '../lib/storage'
 import type { Track } from '../types'
 
 const shuffleArray = <T,>(items: T[]): T[] => {
@@ -57,6 +58,8 @@ export function usePlayer(allSearchTracks: Track[], onPlay?: (trackId: string) =
   const [playerOpen, setPlayerOpen] = useState(false)
   const [playerClosing, setPlayerClosing] = useState(false)
   const [miniPlayerVisible, setMiniPlayerVisible] = useState(false)
+  const resumeTimeRef = useRef<number | null>(null)
+  const restoredRef = useRef(false)
 
   useEffect(() => {
     if (!audioRef.current) return
@@ -73,6 +76,56 @@ export function usePlayer(allSearchTracks: Track[], onPlay?: (trackId: string) =
       audioRef.current.pause()
     }
   }, [track, playing])
+
+  // Restore the last-playing track/queue/position once, right after mount. Runs only on the
+  // first render regardless of allSearchTracks changes (it re-checks on every change until it
+  // either finds the track or confirms it's gone, then never runs again).
+  useEffect(() => {
+    if (restoredRef.current) return
+    const nowPlaying = loadNowPlaying()
+    if (!nowPlaying) { restoredRef.current = true; return }
+    const restoredTrack = allSearchTracks.find(item => item.id === nowPlaying.trackId)
+    if (!restoredTrack) { restoredRef.current = true; saveNowPlaying(null); return }
+    restoredRef.current = true
+    resumeTimeRef.current = nowPlaying.currentTime
+    setQueue(nowPlaying.queue)
+    setQueueSourceLabel(nowPlaying.queueSourceLabel)
+    setTrack(restoredTrack)
+    setMiniPlayerVisible(true)
+  }, [allSearchTracks])
+
+  // Keep the current track's audioUrl/coverUrl in sync with allSearchTracks. track is a
+  // snapshot taken at select-time, so if IndexedDB hydration (audio/cover blobs) finishes after
+  // the track was already selected or restored, this is what lets the real media catch up.
+  useEffect(() => {
+    if (!track.id) return
+    const latest = allSearchTracks.find(item => item.id === track.id)
+    if (latest && (latest.audioUrl !== track.audioUrl || latest.coverUrl !== track.coverUrl)) {
+      setTrack(latest)
+    }
+  }, [allSearchTracks, track.id, track.audioUrl, track.coverUrl])
+
+  // Autosave now-playing so an abrupt stop (crash, backgrounded tab getting killed, force-close)
+  // still resumes close to where it left off, not just a graceful reload. Reads through refs so
+  // this effect (and its interval/listeners) is set up once, not torn down on every currentTime tick.
+  const nowPlayingRef = useRef({ trackId: track.id, queue, queueSourceLabel })
+  nowPlayingRef.current = { trackId: track.id, queue, queueSourceLabel }
+  useEffect(() => {
+    const persistNowPlaying = () => {
+      const { trackId, queue: currentQueue, queueSourceLabel: currentLabel } = nowPlayingRef.current
+      if (!trackId) return
+      saveNowPlaying({ trackId, queue: currentQueue, queueSourceLabel: currentLabel, currentTime: audioRef.current?.currentTime ?? 0 })
+    }
+    const interval = window.setInterval(persistNowPlaying, 5000)
+    const handleVisibilityChange = () => { if (document.visibilityState === 'hidden') persistNowPlaying() }
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    window.addEventListener('beforeunload', persistNowPlaying)
+    return () => {
+      window.clearInterval(interval)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      window.removeEventListener('beforeunload', persistNowPlaying)
+    }
+  }, [])
 
   const selectTrack = (nextTrack: Track) => {
     setTrack(nextTrack)
@@ -155,7 +208,14 @@ export function usePlayer(allSearchTracks: Track[], onPlay?: (trackId: string) =
   }
 
   const handleTimeUpdate = (event: SyntheticEvent<HTMLAudioElement>) => setCurrentTime(event.currentTarget.currentTime)
-  const handleLoadedMetadata = (event: SyntheticEvent<HTMLAudioElement>) => setDuration(event.currentTarget.duration)
+  const handleLoadedMetadata = (event: SyntheticEvent<HTMLAudioElement>) => {
+    setDuration(event.currentTarget.duration)
+    if (resumeTimeRef.current !== null) {
+      event.currentTarget.currentTime = resumeTimeRef.current
+      setCurrentTime(resumeTimeRef.current)
+      resumeTimeRef.current = null
+    }
+  }
   const handleEnded = () => {
     if (repeatOne) {
       if (audioRef.current) {

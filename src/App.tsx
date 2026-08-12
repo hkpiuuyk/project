@@ -6,17 +6,15 @@ import './styles/shared.css'
 import { tabs } from './data'
 import { usePersistentState } from './hooks/usePersistentState'
 import { usePlayer } from './hooks/usePlayer'
-import { loadDiaryEntries, loadPlayHistory, loadPlaylists, loadTrackAudio, loadTrackCover, loadTracks, saveDiaryEntries, savePlayHistory, savePlaylists, saveTracks } from './lib/storage'
+import { loadDiaryEntries, loadMood, loadPlayHistory, loadPlaylists, loadTrackAudio, loadTrackCover, loadTracks, saveDiaryEntries, saveMood, savePlayHistory, savePlaylists, saveTracks } from './lib/storage'
 import { Player } from './components/Player'
 import { DiaryScreen } from './screens/DiaryScreen'
 import { HomeScreen } from './screens/HomeScreen'
 import { LibraryScreen } from './screens/LibraryScreen'
 import { MyScreen } from './screens/MyScreen'
 import { SearchScreen } from './screens/SearchScreen'
-import type { Mood } from './types'
-
 function App() {
-  const [mood, setMood] = useState<Mood | null>(null)
+  const [mood, setMood] = usePersistentState(loadMood, saveMood)
   const [tab, setTab] = useState('홈')
   const [allSearchTracks, setAllSearchTracks] = usePersistentState(loadTracks, saveTracks)
   const [playlists, setPlaylists] = usePersistentState(loadPlaylists, savePlaylists)
