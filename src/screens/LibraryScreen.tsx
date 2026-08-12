@@ -16,10 +16,12 @@ type LibraryScreenProps = {
   setPlaylists: Dispatch<SetStateAction<Playlist[]>>
   activePlaylistId: string | null
   setActivePlaylistId: Dispatch<SetStateAction<string | null>>
-  playQueue: (trackIds: string[], startIndex: number) => void
+  playQueue: (trackIds: string[], startIndex: number, sourceLabel?: string) => void
+  likedTrackIds: string[]
+  toggleLike: (trackId: string) => void
 }
 
-export function LibraryScreen({ visible, allSearchTracks, setAllSearchTracks, playlists, setPlaylists, activePlaylistId, setActivePlaylistId, playQueue }: LibraryScreenProps) {
+export function LibraryScreen({ visible, allSearchTracks, setAllSearchTracks, playlists, setPlaylists, activePlaylistId, setActivePlaylistId, playQueue, likedTrackIds, toggleLike }: LibraryScreenProps) {
   const [libraryFilter, setLibraryFilter] = useState('전체')
   const [createSheetOpen, setCreateSheetOpen] = useState(false)
   const [uploadSheetOpen, setUploadSheetOpen] = useState(false)
@@ -180,8 +182,8 @@ export function LibraryScreen({ visible, allSearchTracks, setAllSearchTracks, pl
   return <>
     {visible && (activePlaylistId ? <><section className="detail-track-list">{detailTracks.map(item => <div className={draggedTrackId === item.id ? 'detail-track-row dragging' : 'detail-track-row'} data-track-id={item.id} key={item.id}><span className="artwork" style={item.coverUrl ? { backgroundImage: `url(${item.coverUrl})`, backgroundSize: 'cover' } : undefined} /><span className="track-copy"><strong>{item.title}</strong><span>{item.artist}</span></span><div className="song-actions"><button className="order-handle" onPointerDown={event => { event.preventDefault(); event.currentTarget.setPointerCapture(event.pointerId); setDraggedTrackId(item.id) }} onPointerMove={event => { if (!draggedTrackId) return; const target = document.elementFromPoint(event.clientX, event.clientY)?.closest<HTMLElement>('[data-track-id]')?.dataset.trackId; if (target && target !== draggedTrackId) movePlaylistSong(draggedTrackId, target) }} onPointerUp={() => setDraggedTrackId(null)} onPointerCancel={() => setDraggedTrackId(null)} aria-label={`${item.title} 순서 변경`}><img src={orderIcon} alt="" /></button><button className="song-delete-button" onClick={() => deletePlaylistSong(item.id)} aria-label={`${item.title} 삭제`}>삭제</button></div></div>)}</section><button className="add-song-button" onClick={() => { setTargetPlaylistId(activePlaylistId); setSelectedTrackIds([]); setSongAddSheetOpen(true) }}>+ 곡 추가</button></> : <><div className="library-filters">{['전체', '좋아요', '최근재생'].map(filter => <button key={filter} onClick={() => setLibraryFilter(filter)} className={libraryFilter === filter ? 'library-filter active-filter' : 'library-filter'}>{filter}</button>)}</div><section className="playlist-section"><div className="playlist-heading"><h2>내 플레이리스트</h2><div><button onClick={() => setCreateSheetOpen(true)}>+ 만들기</button><button className="upload-track-button" onClick={() => setUploadSheetOpen(true)}>+ 음악 추가</button></div></div>{playlists.map(playlist => { const playlistTrack: Track = { id: playlist.id, title: playlist.name, artist: `곡 ${playlist.trackIds.length}개` }
           const firstTrack = allSearchTracks.find(item => item.id === playlist.trackIds[0])
-          return <TrackRow key={playlist.id} track={playlistTrack} light={false} onRowClick={() => setActivePlaylistId(playlist.id)} onDelete={() => setPlaylistPendingDeleteId(playlist.id)} onPlay={firstTrack ? () => playQueue(playlist.trackIds, 0) : undefined} />
-        })}</section><section className="playlist-section"><div className="playlist-heading"><h2>모든 곡</h2></div>{allSearchTracks.map(item => <TrackRow key={item.id} track={item} light={false} onPlay={() => playQueue(allSearchTracks.map(current => current.id), allSearchTracks.findIndex(current => current.id === item.id))} />)}{allSearchTracks.length === 0 && <p className="no-results">업로드한 음악이 없어요.</p>}</section></>)}
+          return <TrackRow key={playlist.id} track={playlistTrack} light={false} onRowClick={() => setActivePlaylistId(playlist.id)} onDelete={() => setPlaylistPendingDeleteId(playlist.id)} onPlay={firstTrack ? () => playQueue(playlist.trackIds, 0, playlist.name) : undefined} />
+        })}</section><section className="playlist-section"><div className="playlist-heading"><h2>모든 곡</h2></div>{allSearchTracks.map(item => <TrackRow key={item.id} track={item} light={false} onPlay={() => playQueue(allSearchTracks.map(current => current.id), allSearchTracks.findIndex(current => current.id === item.id))} liked={likedTrackIds.includes(item.id)} onToggleLike={() => toggleLike(item.id)} />)}{allSearchTracks.length === 0 && <p className="no-results">업로드한 음악이 없어요.</p>}</section></>)}
     <LibrarySheets {...sheetProps} />
   </>
 }

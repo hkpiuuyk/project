@@ -2,14 +2,28 @@ import { useEffect, useRef, useState, type Dispatch, type SetStateAction, type S
 
 import type { Track } from '../types'
 
+const shuffleArray = <T,>(items: T[]): T[] => {
+  const result = [...items]
+  for (let i = result.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[result[i], result[j]] = [result[j], result[i]]
+  }
+  return result
+}
+
 export type PlayerState = {
   audioRef: React.RefObject<HTMLAudioElement | null>
   currentTime: number
   duration: number
   autoplay: boolean
   setAutoplay: Dispatch<SetStateAction<boolean>>
+  shuffled: boolean
+  toggleShuffle: () => void
+  repeatOne: boolean
+  toggleRepeatOne: () => void
   track: Track
   queue: string[]
+  queueSourceLabel: string | null
   playing: boolean
   playerOpen: boolean
   playerClosing: boolean
@@ -24,9 +38,11 @@ export type PlayerState = {
   handleLoadedMetadata: (event: SyntheticEvent<HTMLAudioElement>) => void
   handleEnded: () => void
   selectTrack: (nextTrack: Track) => void
-  playQueue: (trackIds: string[], startIndex: number) => void
+  playQueue: (trackIds: string[], startIndex: number, sourceLabel?: string) => void
   playNextTrack: () => void
   playPrevTrack: () => void
+  moveQueueTrack: (trackId: string, targetTrackId: string) => void
+  removeFromQueue: (trackId: string) => void
   minimizePlayer: () => void
   formatTime: (sec: number) => string
 }
@@ -36,8 +52,11 @@ export function usePlayer(allSearchTracks: Track[]): PlayerState {
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
   const [autoplay, setAutoplay] = useState(true)
+  const [shuffled, setShuffled] = useState(false)
+  const [repeatOne, setRepeatOne] = useState(false)
   const [track, setTrack] = useState<Track>({ id: '', title: '', artist: '' })
   const [queue, setQueue] = useState<string[]>([])
+  const [queueSourceLabel, setQueueSourceLabel] = useState<string | null>(null)
   const [playing, setPlaying] = useState(false)
   const [playerOpen, setPlayerOpen] = useState(false)
   const [playerClosing, setPlayerClosing] = useState(false)
@@ -73,12 +92,30 @@ export function usePlayer(allSearchTracks: Track[]): PlayerState {
     window.setTimeout(() => { setPlayerOpen(false); setPlayerClosing(false) }, 220)
   }
 
-  const playQueue = (trackIds: string[], startIndex: number) => {
+  const playQueue = (trackIds: string[], startIndex: number, sourceLabel?: string) => {
+    setQueueSourceLabel(sourceLabel ?? null)
     const startTrack = allSearchTracks.find(item => item.id === trackIds[startIndex])
     if (!startTrack) return
     setQueue(trackIds)
     selectTrack(startTrack)
   }
+
+  const toggleShuffle = () => {
+    setShuffled(current => {
+      const next = !current
+      if (next) {
+        setQueue(currentQueue => {
+          const currentIndex = Math.max(currentQueue.indexOf(track.id), 0)
+          const before = currentQueue.slice(0, currentIndex + 1)
+          const after = currentQueue.slice(currentIndex + 1)
+          return [...before, ...shuffleArray(after)]
+        })
+      }
+      return next
+    })
+  }
+
+  const toggleRepeatOne = () => setRepeatOne(current => !current)
 
   const playNextTrack = () => {
     if (queue.length === 0) return
@@ -96,9 +133,43 @@ export function usePlayer(allSearchTracks: Track[]): PlayerState {
     if (previous) selectTrack(previous)
   }
 
+  const moveQueueTrack = (trackId: string, targetTrackId: string) => {
+    setQueue(current => {
+      const ids = [...current]
+      const index = ids.indexOf(trackId)
+      const targetIndex = ids.indexOf(targetTrackId)
+      if (index < 0 || targetIndex < 0 || index === targetIndex) return current
+      ids.splice(index, 1)
+      ids.splice(targetIndex, 0, trackId)
+      return ids
+    })
+  }
+
+  const removeFromQueue = (trackId: string) => {
+    const wasCurrentlyPlaying = trackId === track.id
+    const currentIndex = queue.indexOf(trackId)
+    const nextQueue = queue.filter(id => id !== trackId)
+    setQueue(nextQueue)
+    if (wasCurrentlyPlaying) {
+      if (nextQueue.length === 0) { setPlaying(false); return }
+      const nextIndex = currentIndex % nextQueue.length
+      const next = allSearchTracks.find(item => item.id === nextQueue[nextIndex])
+      if (next) selectTrack(next)
+    }
+  }
+
   const handleTimeUpdate = (event: SyntheticEvent<HTMLAudioElement>) => setCurrentTime(event.currentTarget.currentTime)
   const handleLoadedMetadata = (event: SyntheticEvent<HTMLAudioElement>) => setDuration(event.currentTarget.duration)
-  const handleEnded = () => autoplay ? playNextTrack() : setPlaying(false)
+  const handleEnded = () => {
+    if (repeatOne) {
+      if (audioRef.current) {
+        audioRef.current.currentTime = 0
+        audioRef.current.play().catch(() => setPlaying(false))
+      }
+      return
+    }
+    return autoplay ? playNextTrack() : setPlaying(false)
+  }
 
   const formatTime = (sec: number) => {
     if (isNaN(sec) || sec <= 0) return '0:00'
@@ -113,8 +184,13 @@ export function usePlayer(allSearchTracks: Track[]): PlayerState {
     duration,
     autoplay,
     setAutoplay,
+    shuffled,
+    toggleShuffle,
+    repeatOne,
+    toggleRepeatOne,
     track,
     queue,
+    queueSourceLabel,
     playing,
     playerOpen,
     playerClosing,
@@ -132,6 +208,8 @@ export function usePlayer(allSearchTracks: Track[]): PlayerState {
     playQueue,
     playNextTrack,
     playPrevTrack,
+    moveQueueTrack,
+    removeFromQueue,
     minimizePlayer,
     formatTime,
   }

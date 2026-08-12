@@ -26,6 +26,18 @@ function App() {
   const [myScreen, setMyScreen] = useState<'main' | 'diaries' | 'settings' | 'terms'>('main')
   const initialSearchTracks = useRef(allSearchTracks)
   const player = usePlayer(allSearchTracks)
+  const likedPlaylist = playlists.find(playlist => playlist.isLiked)
+  const likedTrackIds = likedPlaylist?.trackIds ?? []
+
+  const toggleLike = (trackId: string) => {
+    setPlaylists(current => {
+      const existing = current.find(playlist => playlist.isLiked)
+      if (!existing) return [...current, { id: crypto.randomUUID(), name: '좋아요', trackIds: [trackId], isLiked: true }]
+      return current.map(playlist => playlist.isLiked
+        ? { ...playlist, trackIds: playlist.trackIds.includes(trackId) ? playlist.trackIds.filter(id => id !== trackId) : [...playlist.trackIds, trackId] }
+        : playlist)
+    })
+  }
 
   useEffect(() => {
     let active = true
@@ -82,15 +94,15 @@ function App() {
         </div>
       </div>
       <section key={`${activePlaylistId ?? myScreen}:${diaryWriting}:${tab}`} className={activePlaylistId ? 'content playlist-detail-content screen-transition' : tab === '탐색' || tab === '라이브러리' || tab === '일기' || tab === '마이' ? 'content search-content screen-transition' : 'content screen-transition'} aria-label={`${tab} 화면`}>
-        <LibraryScreen visible={Boolean(activePlaylistId) || (baseScreenVisible && tab === '라이브러리')} allSearchTracks={allSearchTracks} setAllSearchTracks={setAllSearchTracks} playlists={playlists} setPlaylists={setPlaylists} activePlaylistId={activePlaylistId} setActivePlaylistId={setActivePlaylistId} playQueue={player.playQueue} />
+        <LibraryScreen visible={Boolean(activePlaylistId) || (baseScreenVisible && tab === '라이브러리')} allSearchTracks={allSearchTracks} setAllSearchTracks={setAllSearchTracks} playlists={playlists} setPlaylists={setPlaylists} activePlaylistId={activePlaylistId} setActivePlaylistId={setActivePlaylistId} playQueue={player.playQueue} likedTrackIds={likedTrackIds} toggleLike={toggleLike} />
         <DiaryScreen visible={!activePlaylistId && (diaryWriting || (baseScreenVisible && tab === '일기'))} diaryWriting={diaryWriting} setDiaryWriting={setDiaryWriting} diaryEntries={diaryEntries} setDiaryEntries={setDiaryEntries} track={player.track} setQueue={player.setQueue} selectTrack={player.selectTrack} />
         <MyScreen visible={!activePlaylistId && !diaryWriting && (myScreen !== 'main' || (baseScreenVisible && tab === '마이'))} myScreen={myScreen} setMyScreen={setMyScreen} autoplay={player.autoplay} setAutoplay={player.setAutoplay} playlists={playlists} diaryEntries={diaryEntries} setQueue={player.setQueue} selectTrack={player.selectTrack} />
-        <HomeScreen visible={baseScreenVisible && tab === '홈'} mood={mood} setMood={setMood} tracks={allSearchTracks} playQueue={player.playQueue} />
-        <SearchScreen visible={baseScreenVisible && tab === '탐색'} tracks={allSearchTracks} playQueue={player.playQueue} />
+        <HomeScreen visible={baseScreenVisible && tab === '홈'} mood={mood} setMood={setMood} tracks={allSearchTracks} playQueue={player.playQueue} likedTrackIds={likedTrackIds} toggleLike={toggleLike} />
+        <SearchScreen visible={baseScreenVisible && tab === '탐색'} tracks={allSearchTracks} playQueue={player.playQueue} likedTrackIds={likedTrackIds} toggleLike={toggleLike} />
         {!activePlaylistId && !diaryWriting && myScreen === 'main' && !tabs.some(([name]) => name === tab) && <section className="empty-screen"><h2>{tab}</h2><p>{tab} 화면은 곧 준비됩니다.</p></section>}
       </section>
     </div>
-    <Player {...player} />
+    <Player {...player} allSearchTracks={allSearchTracks} />
     <nav className="nav-footer" aria-label="주요 메뉴">{tabs.map(([name, icon]) => <button key={name} className={tab === name ? 'tab active' : 'tab'} onClick={() => { setActivePlaylistId(null); setDiaryWriting(false); setMyScreen('main'); setTab(name) }}><img src={icon} alt="" /><span>{name}</span></button>)}</nav>
   </main>
 }
