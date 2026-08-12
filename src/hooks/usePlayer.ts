@@ -30,14 +30,10 @@ export type PlayerState = {
   miniPlayerVisible: boolean
   setPlaying: Dispatch<SetStateAction<boolean>>
   setPlayerOpen: Dispatch<SetStateAction<boolean>>
-  setQueue: Dispatch<SetStateAction<string[]>>
   setCurrentTime: Dispatch<SetStateAction<number>>
-  playerDragStart: number | null
-  setPlayerDragStart: Dispatch<SetStateAction<number | null>>
   handleTimeUpdate: (event: SyntheticEvent<HTMLAudioElement>) => void
   handleLoadedMetadata: (event: SyntheticEvent<HTMLAudioElement>) => void
   handleEnded: () => void
-  selectTrack: (nextTrack: Track) => void
   playQueue: (trackIds: string[], startIndex: number, sourceLabel?: string) => void
   playNextTrack: () => void
   playPrevTrack: () => void
@@ -47,7 +43,7 @@ export type PlayerState = {
   formatTime: (sec: number) => string
 }
 
-export function usePlayer(allSearchTracks: Track[]): PlayerState {
+export function usePlayer(allSearchTracks: Track[], onPlay?: (trackId: string) => void): PlayerState {
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
@@ -61,7 +57,6 @@ export function usePlayer(allSearchTracks: Track[]): PlayerState {
   const [playerOpen, setPlayerOpen] = useState(false)
   const [playerClosing, setPlayerClosing] = useState(false)
   const [miniPlayerVisible, setMiniPlayerVisible] = useState(false)
-  const [playerDragStart, setPlayerDragStart] = useState<number | null>(null)
 
   useEffect(() => {
     if (!audioRef.current) return
@@ -81,8 +76,10 @@ export function usePlayer(allSearchTracks: Track[]): PlayerState {
 
   const selectTrack = (nextTrack: Track) => {
     setTrack(nextTrack)
-    setPlaying(Boolean(nextTrack.audioUrl))
+    const canPlay = Boolean(nextTrack.audioUrl)
+    setPlaying(canPlay)
     setMiniPlayerVisible(true)
+    if (canPlay) onPlay?.(nextTrack.id)
   }
 
   const minimizePlayer = () => {
@@ -97,7 +94,6 @@ export function usePlayer(allSearchTracks: Track[]): PlayerState {
     if (!startTrack) return
     setQueue(trackIds)
     selectTrack(startTrack)
-    setPlayerOpen(true)
   }
 
   const toggleShuffle = () => {
@@ -197,14 +193,10 @@ export function usePlayer(allSearchTracks: Track[]): PlayerState {
     miniPlayerVisible,
     setPlaying,
     setPlayerOpen,
-    setQueue,
     setCurrentTime,
-    playerDragStart,
-    setPlayerDragStart,
     handleTimeUpdate,
     handleLoadedMetadata,
     handleEnded,
-    selectTrack,
     playQueue,
     playNextTrack,
     playPrevTrack,

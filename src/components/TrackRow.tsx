@@ -13,9 +13,10 @@ type TrackRowProps = {
   onDelete?: () => void
   liked?: boolean
   onToggleLike?: () => void
+  meta?: string
 }
 
-export function TrackRow({ track, onPlay, light, onRowClick, onDelete, liked, onToggleLike }: TrackRowProps) {
+export function TrackRow({ track, onPlay, light, onRowClick, onDelete, liked, onToggleLike, meta }: TrackRowProps) {
   return <div className={onRowClick ? 'track-row clickable-row' : 'track-row'} onClick={onRowClick}>
     <div
       className="artwork"
@@ -25,6 +26,7 @@ export function TrackRow({ track, onPlay, light, onRowClick, onDelete, liked, on
     <div className="track-copy">
       <strong>{track.title}</strong>
       <span>{track.artist}</span>
+      {meta && <span className="track-meta">{meta}</span>}
     </div>
     {onDelete && <button className="playlist-delete" onClick={event => { event.stopPropagation(); onDelete() }} aria-label={`${track.title} 삭제`}>삭제</button>}
     {onToggleLike && <button className="icon-button like-button" onClick={event => { event.stopPropagation(); onToggleLike() }} aria-label={liked ? '좋아요 취소' : '좋아요'}><img src={liked ? heartAddFillIcon : heartAddLineIcon} alt="" /></button>}

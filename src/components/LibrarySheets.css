@@ -16,7 +16,7 @@
 }
 .delete-dialog .confirm-delete:active { background-color: color-mix(in oklab, #1c2024, black 12%); }
 .delete-dialog .confirm-delete:focus-visible { outline: 2px solid var(--ui-focus-ring); outline-offset: 2px; }
-.song-add-sheet { width: min(100%, 360px); min-height: 500px; max-height: min(600px, 100dvh); padding: 16px 20px 28px; border-radius: 20px 20px 0 0; background: #fff; display: flex; flex-direction: column; gap: 14px; animation: sheet-in .2s ease-out; }
+.song-add-sheet { width: min(100%, 1024px); min-height: 500px; max-height: min(600px, 100dvh); padding: 16px 20px 28px; border-radius: 20px 20px 0 0; background: #fff; display: flex; flex-direction: column; gap: 14px; animation: sheet-in .2s ease-out; }
 .song-add-sheet header { height: 44px; display: flex; align-items: center; justify-content: space-between; }
 .song-add-sheet header h2 { font-size: 18px; font-weight: 700; }
 .song-add-sheet header button { width: 44px; height: 44px; padding: 0; border: 0; border-radius: 8px; background: none; transition: background-color var(--ui-duration) ease-out; }

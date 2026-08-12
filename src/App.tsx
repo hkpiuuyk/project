@@ -6,7 +6,7 @@ import './styles/shared.css'
 import { tabs } from './data'
 import { usePersistentState } from './hooks/usePersistentState'
 import { usePlayer } from './hooks/usePlayer'
-import { loadDiaryEntries, loadPlaylists, loadTrackAudio, loadTrackCover, loadTracks, saveDiaryEntries, savePlaylists, saveTracks } from './lib/storage'
+import { loadDiaryEntries, loadPlayHistory, loadPlaylists, loadTrackAudio, loadTrackCover, loadTracks, saveDiaryEntries, savePlayHistory, savePlaylists, saveTracks } from './lib/storage'
 import { Player } from './components/Player'
 import { DiaryScreen } from './screens/DiaryScreen'
 import { HomeScreen } from './screens/HomeScreen'
@@ -21,11 +21,15 @@ function App() {
   const [allSearchTracks, setAllSearchTracks] = usePersistentState(loadTracks, saveTracks)
   const [playlists, setPlaylists] = usePersistentState(loadPlaylists, savePlaylists)
   const [diaryEntries, setDiaryEntries] = usePersistentState(loadDiaryEntries, saveDiaryEntries)
+  const [playHistory, setPlayHistory] = usePersistentState(loadPlayHistory, savePlayHistory)
   const [activePlaylistId, setActivePlaylistId] = useState<string | null>(null)
   const [diaryWriting, setDiaryWriting] = useState(false)
-  const [myScreen, setMyScreen] = useState<'main' | 'diaries' | 'settings' | 'terms'>('main')
+  const [myScreen, setMyScreen] = useState<'main' | 'diaries' | 'settings' | 'terms' | 'credits'>('main')
   const initialSearchTracks = useRef(allSearchTracks)
-  const player = usePlayer(allSearchTracks)
+  const recordPlay = (trackId: string) => {
+    setPlayHistory(current => [{ trackId, playedAt: Date.now() }, ...current].slice(0, 100))
+  }
+  const player = usePlayer(allSearchTracks, recordPlay)
   const likedPlaylist = playlists.find(playlist => playlist.isLiked)
   const likedTrackIds = likedPlaylist?.trackIds ?? []
 
@@ -94,7 +98,7 @@ function App() {
 
   return <main className={mood ? 'phone-shell mood-active' : 'phone-shell'} style={moodStyle}>
     <p className="large-screen-warning">이 앱은 모바일·태블릿 화면에 맞춰 만들어졌어요. 더 큰 화면에서는 레이아웃이 깨질 수 있어요.</p>
-    {activePlaylistId ? <header className="playlist-detail-header"><button onClick={() => setActivePlaylistId(null)} aria-label="라이브러리로 돌아가기"><img src={backIcon} alt="" /></button><h1>{openPlaylist?.name ?? ''}</h1></header> : diaryWriting ? <header className="playlist-detail-header"><button onClick={() => setDiaryWriting(false)} aria-label="일기 목록으로 돌아가기"><img src={backIcon} alt="" /></button><h1>일기 쓰기</h1></header> : myScreen !== 'main' ? <header className="playlist-detail-header"><button onClick={() => setMyScreen('main')} aria-label="마이로 돌아가기"><img src={backIcon} alt="" /></button><h1>{myScreen === 'diaries' ? '작성한 일기' : myScreen === 'settings' ? '재생 설정' : '이용약관'}</h1></header> : tab === '탐색' || tab === '라이브러리' || tab === '일기' || tab === '마이' ? <header className="search-header"><span>음악 일기</span><h1>{tab}</h1>{tab === '일기' && <button className="diary-write-button" onClick={() => setDiaryWriting(true)}>일기 쓰기</button>}</header> : <header className="app-header"><span className="logo-mark" /><h1>음악 일기</h1></header>}
+    {activePlaylistId ? <header className="playlist-detail-header"><button onClick={() => setActivePlaylistId(null)} aria-label="라이브러리로 돌아가기"><img src={backIcon} alt="" /></button><h1>{openPlaylist?.name ?? ''}</h1></header> : diaryWriting ? <header className="playlist-detail-header"><button onClick={() => setDiaryWriting(false)} aria-label="일기 목록으로 돌아가기"><img src={backIcon} alt="" /></button><h1>일기 쓰기</h1></header> : myScreen !== 'main' ? <header className="playlist-detail-header"><button onClick={() => setMyScreen('main')} aria-label="마이로 돌아가기"><img src={backIcon} alt="" /></button><h1>{myScreen === 'diaries' ? '작성한 일기' : myScreen === 'settings' ? '재생 설정' : myScreen === 'credits' ? '크레딧' : '이용약관'}</h1></header> : tab === '탐색' || tab === '라이브러리' || tab === '일기' || tab === '마이' ? <header className="search-header"><span>음악 일기</span><h1>{tab}</h1>{tab === '일기' && <button className="diary-write-button" onClick={() => setDiaryWriting(true)}>일기 쓰기</button>}</header> : <header className="app-header"><span className="logo-mark" /><h1>음악 일기</h1></header>}
     <div className="content-area">
       <div className="mood-backdrop" aria-hidden="true">
         <div className="mood-orbs">
@@ -104,10 +108,10 @@ function App() {
         </div>
       </div>
       <section key={`${activePlaylistId ?? myScreen}:${diaryWriting}:${tab}`} className={activePlaylistId ? 'content playlist-detail-content screen-transition' : tab === '탐색' || tab === '라이브러리' || tab === '일기' || tab === '마이' ? 'content search-content screen-transition' : 'content screen-transition'} aria-label={`${tab} 화면`}>
-        <LibraryScreen visible={Boolean(activePlaylistId) || (baseScreenVisible && tab === '라이브러리')} allSearchTracks={allSearchTracks} setAllSearchTracks={setAllSearchTracks} playlists={playlists} setPlaylists={setPlaylists} activePlaylistId={activePlaylistId} setActivePlaylistId={setActivePlaylistId} playQueue={player.playQueue} likedTrackIds={likedTrackIds} toggleLike={toggleLike} />
+        <LibraryScreen visible={Boolean(activePlaylistId) || (baseScreenVisible && tab === '라이브러리')} allSearchTracks={allSearchTracks} setAllSearchTracks={setAllSearchTracks} playlists={playlists} setPlaylists={setPlaylists} activePlaylistId={activePlaylistId} setActivePlaylistId={setActivePlaylistId} playQueue={player.playQueue} likedTrackIds={likedTrackIds} toggleLike={toggleLike} playHistory={playHistory} />
         <DiaryScreen visible={!activePlaylistId && (diaryWriting || (baseScreenVisible && tab === '일기'))} diaryWriting={diaryWriting} setDiaryWriting={setDiaryWriting} diaryEntries={diaryEntries} setDiaryEntries={setDiaryEntries} track={player.track} allSearchTracks={allSearchTracks} playQueue={player.playQueue} />
-        <MyScreen visible={!activePlaylistId && !diaryWriting && (myScreen !== 'main' || (baseScreenVisible && tab === '마이'))} myScreen={myScreen} setMyScreen={setMyScreen} autoplay={player.autoplay} setAutoplay={player.setAutoplay} playlists={playlists} diaryEntries={diaryEntries} playQueue={player.playQueue} setTab={setTab} />
-        <HomeScreen visible={baseScreenVisible && tab === '홈'} mood={mood} setMood={setMood} tracks={allSearchTracks} playQueue={player.playQueue} likedTrackIds={likedTrackIds} toggleLike={toggleLike} />
+        <MyScreen visible={!activePlaylistId && !diaryWriting && (myScreen !== 'main' || (baseScreenVisible && tab === '마이'))} myScreen={myScreen} setMyScreen={setMyScreen} autoplay={player.autoplay} setAutoplay={player.setAutoplay} playlists={playlists} diaryEntries={diaryEntries} allSearchTracks={allSearchTracks} playQueue={player.playQueue} setTab={setTab} />
+        <HomeScreen visible={baseScreenVisible && tab === '홈'} mood={mood} setMood={setMood} tracks={allSearchTracks} playQueue={player.playQueue} likedTrackIds={likedTrackIds} toggleLike={toggleLike} playHistory={playHistory} />
         <SearchScreen visible={baseScreenVisible && tab === '탐색'} tracks={allSearchTracks} playQueue={player.playQueue} likedTrackIds={likedTrackIds} toggleLike={toggleLike} />
         {!activePlaylistId && !diaryWriting && myScreen === 'main' && !tabs.some(([name]) => name === tab) && <section className="empty-screen"><h2>{tab}</h2><p>{tab} 화면은 곧 준비됩니다.</p></section>}
       </section>

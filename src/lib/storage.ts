@@ -1,11 +1,12 @@
-import type { DiaryEntry, Playlist, Track } from '../types'
+import type { DiaryEntry, PlayHistoryEntry, Playlist, Track } from '../types'
 
-export const PLAYLIST_STORAGE_KEY = 'music-diary-playlists'
-export const PLAYLIST_SONGS_STORAGE_KEY = 'music-diary-playlist-songs'
-export const DIARY_STORAGE_KEY = 'music-diary-entries'
-export const PLAYLIST_STORAGE_KEY_V2 = 'music-diary-playlists-v2'
-export const DIARY_STORAGE_KEY_V2 = 'music-diary-entries-v2'
-export const TRACKS_STORAGE_KEY = 'music-diary-all-tracks'
+const PLAYLIST_STORAGE_KEY = 'music-diary-playlists'
+const PLAYLIST_SONGS_STORAGE_KEY = 'music-diary-playlist-songs'
+const DIARY_STORAGE_KEY = 'music-diary-entries'
+const PLAYLIST_STORAGE_KEY_V2 = 'music-diary-playlists-v2'
+const DIARY_STORAGE_KEY_V2 = 'music-diary-entries-v2'
+const TRACKS_STORAGE_KEY = 'music-diary-all-tracks'
+const PLAY_HISTORY_STORAGE_KEY = 'music-diary-play-history'
 const AUDIO_DB_NAME = 'music-diary-audio'
 const AUDIO_STORE_NAME = 'tracks'
 const COVER_STORE_NAME = 'covers'
@@ -65,13 +66,31 @@ export async function loadTrackCover(id: string) {
   return blob
 }
 
-export const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null && !Array.isArray(value)
+const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null && !Array.isArray(value)
 
-export const isPlaylist = (value: unknown): value is Playlist => isRecord(value) && typeof value.id === 'string' && typeof value.name === 'string' && Array.isArray(value.trackIds) && value.trackIds.every(item => typeof item === 'string')
+const isPlaylist = (value: unknown): value is Playlist => isRecord(value) && typeof value.id === 'string' && typeof value.name === 'string' && Array.isArray(value.trackIds) && value.trackIds.every(item => typeof item === 'string')
 
-export const isTrack = (value: unknown): value is Track => isRecord(value) && typeof value.id === 'string' && typeof value.title === 'string' && typeof value.artist === 'string' && (value.coverUrl === undefined || typeof value.coverUrl === 'string') && (value.audioUrl === undefined || typeof value.audioUrl === 'string')
+const isTrack = (value: unknown): value is Track => isRecord(value) && typeof value.id === 'string' && typeof value.title === 'string' && typeof value.artist === 'string' && (value.coverUrl === undefined || typeof value.coverUrl === 'string') && (value.audioUrl === undefined || typeof value.audioUrl === 'string')
 
-export const isDiaryEntry = (value: unknown): value is DiaryEntry => isRecord(value) && typeof value.id === 'string' && typeof value.date === 'string' && typeof value.mood === 'string' && typeof value.text === 'string' && isTrack(value.track)
+const isDiaryEntry = (value: unknown): value is DiaryEntry => isRecord(value) && typeof value.id === 'string' && typeof value.date === 'string' && typeof value.mood === 'string' && typeof value.text === 'string' && isTrack(value.track)
+
+const isPlayHistoryEntry = (value: unknown): value is PlayHistoryEntry =>
+  isRecord(value) && typeof value.trackId === 'string' && typeof value.playedAt === 'number'
+
+export function loadPlayHistory(): PlayHistoryEntry[] {
+  try {
+    const saved = localStorage.getItem(PLAY_HISTORY_STORAGE_KEY)
+    if (!saved) return []
+    const parsed: unknown = JSON.parse(saved)
+    return Array.isArray(parsed) ? parsed.filter(isPlayHistoryEntry) : []
+  } catch {
+    return []
+  }
+}
+
+export function savePlayHistory(history: PlayHistoryEntry[]) {
+  localStorage.setItem(PLAY_HISTORY_STORAGE_KEY, JSON.stringify(history))
+}
 
 export function loadTracks(): Track[] {
   try {
@@ -149,13 +168,26 @@ export function savePlaylists(playlists: Playlist[]) {
 }
 
 export function loadDiaryEntries(): DiaryEntry[] {
+  const titleToId = new Map<string, string>()
+  try {
+    const savedTracks = localStorage.getItem(TRACKS_STORAGE_KEY)
+    const parsedTracks: unknown = savedTracks ? JSON.parse(savedTracks) : []
+    if (Array.isArray(parsedTracks)) {
+      parsedTracks.filter(isTrack).forEach(item => {
+        if (!titleToId.has(item.title)) titleToId.set(item.title, item.id)
+      })
+    }
+  } catch {
+    // Track lookup is best effort; unresolved legacy titles fall back to a fresh id below.
+  }
+
   const normalizeTrack = (value: unknown): Track | null => {
     if (Array.isArray(value) && typeof value[0] === 'string' && typeof value[1] === 'string') {
-      return { id: crypto.randomUUID(), title: value[0], artist: value[1] }
+      return { id: titleToId.get(value[0]) ?? crypto.randomUUID(), title: value[0], artist: value[1] }
     }
     if (!isRecord(value) || typeof value.title !== 'string' || typeof value.artist !== 'string') return null
     const normalized: Track = {
-      id: typeof value.id === 'string' ? value.id : crypto.randomUUID(),
+      id: typeof value.id === 'string' ? value.id : (titleToId.get(value.title) ?? crypto.randomUUID()),
       title: value.title,
       artist: value.artist,
     }

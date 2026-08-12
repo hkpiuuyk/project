@@ -18,7 +18,7 @@
 .mini-control img { display: block; width: 24px; height: 24px; }
 .player-overlay { position: fixed; inset: 0; z-index: 10; background: rgb(28 32 36 / .28); display: flex; align-items: flex-end; justify-content: center; }
 .player-overlay.player-closing { animation: overlay-out .22s ease-out forwards; }
-.player-sheet { width: min(100%, 1024px); min-height: 620px; max-height: min(620px, 100dvh); padding: 32px 30px 40px; overflow-y: auto; scrollbar-width: none; -ms-overflow-style: none; background: #fff; position: relative; border-radius: 18px 18px 0 0; text-align: center; touch-action: pan-y; animation: sheet-in .2s ease-out; }
+.player-sheet { width: min(100%, 1024px); max-height: min(1040px, 100dvh); padding: 32px 30px 40px; overflow-y: auto; scrollbar-width: none; -ms-overflow-style: none; background: #fff; position: relative; border-radius: 18px 18px 0 0; text-align: center; touch-action: pan-y; animation: sheet-in .2s ease-out; transition: transform .2s ease-out; }
 .player-sheet::-webkit-scrollbar { display: none; }
 .player-sheet.player-sheet-closing { animation: sheet-out .22s ease-in forwards; }
 .player-back-button { position: absolute; top: 8px; left: 8px; width: 36px; height: 36px; display: grid; place-items: center; padding: 6px; border: 0; border-radius: 50%; background: transparent; transition: background-color var(--ui-duration) ease-out; }
@@ -28,7 +28,9 @@
 .player-back-button:active { background-color: rgb(28 32 36 / .12); }
 .player-back-button:focus-visible { outline: 2px solid var(--ui-focus-ring); outline-offset: 2px; }
 .player-back-button img { display: block; width: 24px; height: 24px; }
-.player-sheet-handle { width: 36px; height: 4px; margin: 0 auto 12px; border-radius: 2px; background: #d9d9d9; }
+.player-drag-header { padding: 10px 0 12px; touch-action: none; cursor: grab; }
+.player-drag-header:active { cursor: grabbing; }
+.player-sheet-handle { width: 36px; height: 4px; margin: 0 auto; border-radius: 2px; background: #d9d9d9; }
 .sheet-artwork { width: 300px; max-width: 100%; aspect-ratio: 1; margin: 12px auto 24px; border-radius: 12px; background: #d9d9d9; }
 .player-sheet h2 { font-size: 21px; }
 .player-sheet p { color: #8a7a6d; margin: 6px 0 30px; font-size: 14px; }
@@ -53,6 +55,8 @@
 .sheet-controls .sheet-play:focus-visible { outline: 2px solid var(--ui-focus-ring); outline-offset: 2px; }
 .sheet-play img { width: 24px; height: 24px; }
 .queue-section { margin-top: 28px; text-align: left; }
+.queue-collapse { max-height: 0; overflow: hidden; transition: max-height .25s ease-out; }
+.queue-collapse.expanded { max-height: 420px; }
 .queue-section h3 { margin: 0 0 12px; font-size: 16px; }
 .queue-list { display: flex; flex-direction: column; gap: 8px; }
 .queue-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; touch-action: pan-y; transition: transform .15s ease-out; }

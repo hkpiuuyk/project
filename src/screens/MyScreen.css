@@ -16,20 +16,30 @@
 .my-stats span { color: #8a7a6d; font-size: 12px; }
 .my-menu { display: flex; flex-direction: column; gap: 8px; }
 .my-menu h2 { margin-bottom: 2px; }
-.my-menu button, .my-setting-row { width: 100%; height: 64px; padding: 0; border: 0; background: transparent; display: flex; align-items: center; justify-content: space-between; color: #1c2024; font-size: 15px; text-align: left; }
-.my-menu button, button.my-setting-row { border-radius: 8px; transition: background-color var(--ui-duration) ease-out; }
+.my-menu button { width: 100%; height: 64px; padding: 0 14px; border: 0; border-radius: 10px; background: #f5f5f5; display: flex; align-items: center; justify-content: space-between; color: #1c2024; font-size: 15px; text-align: left; transition: background-color var(--ui-duration) ease-out; }
 @media (hover: hover) and (pointer: fine) {
-  .my-menu button:hover, button.my-setting-row:hover { background-color: rgb(28 32 36 / .05); }
+  .my-menu button:hover { background-color: color-mix(in oklab, #f5f5f5, black 4%); }
 }
-.my-menu button:active, button.my-setting-row:active { background-color: rgb(28 32 36 / .1); }
-.my-menu button:focus-visible, button.my-setting-row:focus-visible { outline: 2px solid var(--ui-focus-ring); outline-offset: 2px; }
-.my-menu button + button { border-top: 1px solid #e5e5e5; }
+.my-menu button:active { background-color: color-mix(in oklab, #f5f5f5, black 8%); }
+.my-menu button:focus-visible { outline: 2px solid var(--ui-focus-ring); outline-offset: 2px; }
 .my-menu b { color: #8a7a6d; font-size: 24px; font-weight: 400; }
-.my-detail { display: flex; flex-direction: column; padding-top: 4px; }
+.my-detail { display: flex; flex-direction: column; gap: 8px; padding-top: 4px; }
+.my-setting-row { width: 100%; height: 64px; padding: 0 14px; border: 0; border-radius: 10px; background: #f5f5f5; display: flex; align-items: center; justify-content: space-between; color: #1c2024; font-size: 15px; text-align: left; }
+button.my-setting-row { transition: background-color var(--ui-duration) ease-out; }
+@media (hover: hover) and (pointer: fine) {
+  button.my-setting-row:hover { background-color: color-mix(in oklab, #f5f5f5, black 4%); }
+}
+button.my-setting-row:active { background-color: color-mix(in oklab, #f5f5f5, black 8%); }
+button.my-setting-row:focus-visible { outline: 2px solid var(--ui-focus-ring); outline-offset: 2px; }
 .my-setting-row small { color: #8a7a6d; font-size: 13px; }
+.my-setting-row.disabled { opacity: .5; }
 .toggle { width: 40px; height: 24px; padding: 2px; border-radius: 12px; background: #d6d6d6; transition: background .2s ease; }
 .toggle i { display: block; width: 20px; height: 20px; border-radius: 50%; background: #fff; transition: transform .2s ease; }
 .toggle.on { background: #1c2024; }
 .toggle.on i { transform: translateX(16px); }
 .terms-content { display: flex; flex-direction: column; gap: 12px; padding-top: 4px; }
 .terms-content p { margin: 0; color: #8a7a6d; font-size: 14px; line-height: 1.6; }
+.credits-list { display: flex; flex-direction: column; gap: 10px; padding: 0; margin: 4px 0 0; list-style: none; }
+.credits-list li { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; border-radius: 10px; background: #f5f5f5; }
+.credits-list li span { font-size: 14px; font-weight: 600; color: #1c2024; }
+.credits-list li a { font-size: 13px; color: #8a7a6d; text-decoration: none; }

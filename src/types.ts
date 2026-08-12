@@ -8,4 +8,5 @@ export type Track = {
 
 export type Playlist = { id: string; name: string; trackIds: string[]; isLiked?: boolean }
 export type DiaryEntry = { id: string; date: string; mood: string; text: string; track: Track }
+export type PlayHistoryEntry = { trackId: string; playedAt: number }
 export type Mood = { name: string; start: string; middle: string; end: string; chip: string }
